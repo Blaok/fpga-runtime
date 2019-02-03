@@ -22,7 +22,12 @@ $(APP).$(PLATFORM).$(TARGET).xo: $(KERNEL_SRC)
 	  --xp prop:kernel.$(KERNEL_NAME).kernel_flags="-std=c++11"
 
 $(APP).$(PLATFORM).$(TARGET).xclbin: $(APP).$(PLATFORM).$(TARGET).xo
-	$(XOCC) -t $(TARGET) -l $< -o $@ --platform $(PLATFORM)
+	$(XOCC) -t $(TARGET) -l $< -o $@ --platform $(PLATFORM) \
+	  --max_memory_ports $(KERNEL_NAME) \
+	  --nk $(KERNEL_NAME):1:$(KERNEL_NAME) \
+	  --sp $(KERNEL_NAME).m_axi_gmem0:DDR[0] \
+	  --sp $(KERNEL_NAME).m_axi_gmem1:DDR[1] \
+	  --sp $(KERNEL_NAME).m_axi_gmem2:DDR[2]
 
 emconfig.json:
 	emconfigutil --platform $(PLATFORM)

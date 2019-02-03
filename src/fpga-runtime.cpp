@@ -6,16 +6,19 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 #include <CL/cl2.hpp>
-#include <xclbin.h>
+#include <CL/cl_ext.h>
 #include <tinyxml.h>
+#include <xclbin.h>
 
 using std::clog;
 using std::endl;
 using std::runtime_error;
 using std::string;
+using std::unordered_map;
 using std::vector;
 
 namespace fpga {
@@ -75,6 +78,29 @@ Instance::Instance(const string& bitstream) {
       } else {
         throw runtime_error("cannot determine kernel name from binary");
       }
+      unordered_map<int32_t, string> memory_table;
+      auto mem_info = xclbin::get_axlf_section(axlf_top, MEM_TOPOLOGY);
+      if (mem_info != nullptr) {
+        auto topology = reinterpret_cast<const mem_topology*>(
+            reinterpret_cast<const char*>(axlf_top) +
+            mem_info->m_sectionOffset);
+        for (int i = 0; i < topology->m_count; ++i) {
+          const mem_data& mem = topology->m_mem_data[i];
+          if (mem.m_used) {
+            memory_table[i] = reinterpret_cast<const char*>(mem.m_tag);
+          }
+        }
+      }
+      auto conn = xclbin::get_axlf_section(axlf_top, CONNECTIVITY);
+      if (conn != nullptr) {
+        auto connect = reinterpret_cast<const connectivity*>(
+            reinterpret_cast<const char*>(axlf_top) +
+            conn->m_sectionOffset);
+        for (int i = 0; i < connect->m_count; ++i) {
+          const connection& c = connect->m_connection[i];
+          arg_table_[c.arg_index] = memory_table[c.mem_data_index];
+        }
+      }
     } else {
       throw runtime_error("unknown bitstream file");
     }
@@ -117,6 +143,58 @@ Instance::Instance(const string& bitstream) {
       }
     }
   }
+}
+
+cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags,
+                                  size_t size, void* host_ptr) {
+  cl_mem_ext_ptr_t ext;
+  if (arg_table_.count(index)) {
+    if (arg_table_[index] == "bank0") {
+      ext.flags = XCL_MEM_DDR_BANK0;
+    } else if (arg_table_[index] == "bank1") {
+      ext.flags = XCL_MEM_DDR_BANK1;
+    } else if (arg_table_[index] == "bank2") {
+      ext.flags = XCL_MEM_DDR_BANK2;
+    } else if (arg_table_[index] == "bank3") {
+      ext.flags = XCL_MEM_DDR_BANK3;
+    } else {
+      clog << "WARNING: unknown argument memory tag: " << arg_table_[index]
+           << endl;
+    }
+    ext.obj = host_ptr;
+    ext.param = nullptr;
+    flags |= CL_MEM_EXT_PTR_XILINX;
+    host_ptr = &ext;
+  }
+  cl_int err;
+  auto buffer = cl::Buffer(context_, flags, size, host_ptr, &err);
+  CL_CHECK(err);
+  buffer_table_[index] = buffer;
+  return buffer;
+}
+
+void Instance::WriteToDevice() {
+  load_event_.resize(1);
+  CL_CHECK(cmd_.enqueueMigrateMemObjects(
+      load_buffers_, /* flags = */ 0, nullptr, load_event_.data()));
+}
+
+void Instance::ReadFromDevice() {
+  store_buffers_.resize(1);
+  CL_CHECK(cmd_.enqueueMigrateMemObjects(
+      store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
+      store_event_.data()));
+}
+
+void Instance::Exec() {
+  compute_event_.resize(1);
+  CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NDRange(1), cl::NDRange(1),
+      cl::NDRange(1), &load_event_, compute_event_.data()));
+}
+
+void Instance::Finish() {
+  CL_CHECK(cmd_.flush());
+  CL_CHECK(cmd_.finish());
 }
 
 }   // namespace fpga

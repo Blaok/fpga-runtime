@@ -55,6 +55,7 @@ class Instance {
   cl::Program program_;
   cl::Kernel kernel_;
   std::unordered_map<int, cl::Memory> buffer_table_;
+  std::unordered_map<int32_t, std::string> arg_table_;
   std::vector<cl::Memory> load_buffers_;
   std::vector<cl::Memory> store_buffers_;
   std::vector<cl::Event> load_event_;
@@ -86,34 +87,28 @@ class Instance {
   template <typename... Args>
   void SetArg(const Args&... args) { SetArg(0, args...); }
 
+  cl::Buffer CreateBuffer(int index, cl_mem_flags flags,
+                          size_t size, void* host_ptr);
+
   // AllocateBuffers
   template <typename T> void AllocateBuffers(int index, const T& arg) {}
   template <typename T>
   void AllocateBuffers(int index, const RoBuf<T>& arg) {
-    cl_int err;
-    auto buffer = cl::Buffer(context_, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
-                             arg.SizeInBytes(), arg, &err);
-    CL_CHECK(err);
-    buffer_table_[index] = buffer;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
+    cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     load_buffers_.push_back(buffer);
   }
   template <typename T>
   void AllocateBuffers(int index, const WoBuf<T>& arg) {
-    cl_int err;
-    auto buffer = cl::Buffer(context_, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,
-                             arg.SizeInBytes(), arg, &err);
-    CL_CHECK(err);
-    buffer_table_[index] = buffer;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY;
+    cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
+    load_buffers_.push_back(buffer);
     store_buffers_.push_back(buffer);
   }
   template <typename T>
   void AllocateBuffers(int index, const RwBuf<T>& arg) {
-    cl_int err;
-    auto buffer = cl::Buffer(context_, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
-                             arg.SizeInBytes(), arg, &err);
-    CL_CHECK(err);
-    buffer_table_[index] = buffer;
-    load_buffers_.push_back(buffer);
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
+    cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     store_buffers_.push_back(buffer);
   }
   template <typename T, typename... Args>
@@ -124,29 +119,10 @@ class Instance {
   template <typename... Args>
   void AllocateBuffers(const Args&... args) { AllocateBuffers(0, args...); }
 
-  void WriteToDevice() {
-    load_event_.resize(1);
-    CL_CHECK(cmd_.enqueueMigrateMemObjects(
-        load_buffers_, /* flags = */ 0, nullptr, load_event_.data()));
-  }
-
-  void ReadFromDevice() {
-    store_buffers_.resize(1);
-    CL_CHECK(cmd_.enqueueMigrateMemObjects(
-        store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
-        store_event_.data()));
-  }
-
-  void Exec() {
-    compute_event_.resize(1);
-    CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NDRange(1), cl::NDRange(1),
-        cl::NDRange(1), &load_event_, compute_event_.data()));
-  }
-
-  void Finish() {
-    CL_CHECK(cmd_.flush());
-    CL_CHECK(cmd_.finish());
-  }
+  void WriteToDevice();
+  void ReadFromDevice();
+  void Exec();
+  void Finish();
 };
 
 template <typename F, typename... Args>
