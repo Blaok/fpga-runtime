@@ -1,2 +1,8 @@
+*.log
+*.ltx
+*.xclbin
+*.xclbin.info
+*.xo
 .Xil
 .run
+emconfig.json
