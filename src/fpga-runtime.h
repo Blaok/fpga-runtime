@@ -123,10 +123,22 @@ class Instance {
   void ReadFromDevice();
   void Exec();
   void Finish();
+
+  template <cl_profiling_info name> cl_ulong LoadProfilingInfo();
+  template <cl_profiling_info name> cl_ulong ComputeProfilingInfo();
+  template <cl_profiling_info name> cl_ulong StoreProfilingInfo();
+  cl_ulong LoadTimeNanoSeconds();
+  cl_ulong ComputeTimeNanoSeconds();
+  cl_ulong StoreTimeNanoSeconds();
+  double LoadTimeSeconds();
+  double ComputeTimeSeconds();
+  double StoreTimeSeconds();
+  double LoadThroughputGbps();
+  double StoreThroughputGbps();
 };
 
 template <typename... Args>
-void Invoke(const std::string& bitstream, Args&&... args) {
+Instance Invoke(const std::string& bitstream, Args&&... args) {
   auto instance = Instance(bitstream);
   instance.AllocateBuffers(args...);
   instance.WriteToDevice();
@@ -134,6 +146,7 @@ void Invoke(const std::string& bitstream, Args&&... args) {
   instance.Exec();
   instance.ReadFromDevice();
   instance.Finish();
+  return instance;
 }
 
 #ifndef KEEP_CL_CHECK

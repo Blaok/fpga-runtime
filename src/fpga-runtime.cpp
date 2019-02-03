@@ -127,7 +127,8 @@ Instance::Instance(const string& bitstream) {
           }
           CL_CHECK(err);
           cmd_ = cl::CommandQueue(
-              context_, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+              context_, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |
+              CL_QUEUE_PROFILING_ENABLE, &err);
           CL_CHECK(err);
           vector<int> binary_status;
           program_ = cl::Program(
@@ -196,5 +197,60 @@ void Instance::Finish() {
   CL_CHECK(cmd_.flush());
   CL_CHECK(cmd_.finish());
 }
+
+template <cl_profiling_info name>
+cl_ulong ProfilingInfo(const cl::Event& event) {
+  cl_int err;
+  auto time = event.getProfilingInfo<name>(&err);
+  CL_CHECK(err);
+  return time;
+}
+template <cl_profiling_info name>
+cl_ulong Instance::LoadProfilingInfo() {
+  return ProfilingInfo<name>(load_event_[0]);
+}
+template <cl_profiling_info name>
+cl_ulong Instance::ComputeProfilingInfo() {
+  return ProfilingInfo<name>(compute_event_[0]);
+}
+template <cl_profiling_info name>
+cl_ulong Instance::StoreProfilingInfo() {
+  return ProfilingInfo<name>(store_event_[0]);
+}
+cl_ulong Instance::LoadTimeNanoSeconds() {
+  return LoadProfilingInfo<CL_PROFILING_COMMAND_END>() -
+    LoadProfilingInfo<CL_PROFILING_COMMAND_START>();
+}
+cl_ulong Instance::ComputeTimeNanoSeconds() {
+  return ComputeProfilingInfo<CL_PROFILING_COMMAND_END>() -
+    ComputeProfilingInfo<CL_PROFILING_COMMAND_START>();
+}
+cl_ulong Instance::StoreTimeNanoSeconds() {
+  return StoreProfilingInfo<CL_PROFILING_COMMAND_END>() -
+    StoreProfilingInfo<CL_PROFILING_COMMAND_START>();
+}
+double Instance::LoadTimeSeconds() { return LoadTimeNanoSeconds() / 1e9; }
+double Instance::ComputeTimeSeconds() { return ComputeTimeNanoSeconds() / 1e9; }
+double Instance::StoreTimeSeconds() { return StoreTimeNanoSeconds() / 1e9; }
+double Instance::LoadThroughputGbps() {
+  size_t total_size = 0;
+  for (const auto& buffer : load_buffers_) {
+    total_size += buffer.getInfo<CL_MEM_SIZE>();
+  }
+  return double(total_size) / LoadTimeNanoSeconds();
+}
+double Instance::StoreThroughputGbps() {
+  size_t total_size = 0;
+  for (const auto& buffer : store_buffers_) {
+    total_size += buffer.getInfo<CL_MEM_SIZE>();
+  }
+  return double(total_size) / StoreTimeNanoSeconds();
+}
+template cl_ulong Instance::LoadProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
+template cl_ulong Instance::LoadProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
+template cl_ulong Instance::ComputeProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
+template cl_ulong Instance::ComputeProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
+template cl_ulong Instance::StoreProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
+template cl_ulong Instance::StoreProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
 
 }   // namespace fpga

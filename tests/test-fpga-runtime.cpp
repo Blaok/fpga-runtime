@@ -24,8 +24,11 @@ int main(int argc, char* argv[]) {
     c[i] = 0;
     c_base[i] = 1;
   }
-  fpga::Invoke(argv[1], fpga::ReadOnly(a, n), fpga::ReadOnly(b, n),
-               fpga::WriteOnly(c, n), n);
+  auto instance = fpga::Invoke(argv[1], fpga::ReadOnly(a, n),
+                               fpga::ReadOnly(b, n), fpga::WriteOnly(c, n), n);
+  clog << "Load throughput: " << instance.LoadThroughputGbps() << " GB/s\n";
+  clog << "Compute latency: " << instance.ComputeTimeSeconds() << " s" << endl;
+  clog << "Store throughput: " << instance.StoreThroughputGbps() << " GB/s\n";
   VecAdd(a, b, c_base, n);
   for (int i = 0; i < n; ++i) {
     if (c[i] != c_base[i]) {
