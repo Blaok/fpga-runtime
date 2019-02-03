@@ -124,23 +124,20 @@ class Instance {
   template <typename... Args>
   void AllocateBuffers(const Args&... args) { AllocateBuffers(0, args...); }
 
-  template <typename... Args>
-  void WriteToDevice(const Args&... args) {
+  void WriteToDevice() {
     load_event_.resize(1);
     CL_CHECK(cmd_.enqueueMigrateMemObjects(
         load_buffers_, /* flags = */ 0, nullptr, load_event_.data()));
   }
 
-  template <typename... Args>
-  void ReadFromDevice(const Args&... args) {
+  void ReadFromDevice() {
     store_buffers_.resize(1);
     CL_CHECK(cmd_.enqueueMigrateMemObjects(
         store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
         store_event_.data()));
   }
 
-  template <typename... Args>
-  void Exec(const Args&... args) {
+  void Exec() {
     compute_event_.resize(1);
     CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NDRange(1), cl::NDRange(1),
         cl::NDRange(1), &load_event_, compute_event_.data()));
@@ -159,10 +156,10 @@ void Invoke(const std::string& bitstream, F&& func, Args&&... args) {
   } else {
     auto instance = Instance(bitstream);
     instance.AllocateBuffers(args...);
-    instance.WriteToDevice(args...);
+    instance.WriteToDevice();
     instance.SetArg(args...);
-    instance.Exec(args...);
-    instance.ReadFromDevice(args...);
+    instance.Exec();
+    instance.ReadFromDevice();
     instance.Finish();
   }
 }
