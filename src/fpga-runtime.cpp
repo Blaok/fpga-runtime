@@ -180,7 +180,7 @@ void Instance::WriteToDevice() {
 }
 
 void Instance::ReadFromDevice() {
-  store_buffers_.resize(1);
+  store_event_.resize(1);
   CL_CHECK(cmd_.enqueueMigrateMemObjects(
       store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
       store_event_.data()));
