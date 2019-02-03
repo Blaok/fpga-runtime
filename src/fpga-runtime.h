@@ -125,19 +125,15 @@ class Instance {
   void Finish();
 };
 
-template <typename F, typename... Args>
-void Invoke(const std::string& bitstream, F&& func, Args&&... args) {
-  if (bitstream == "") {
-    func(args...);
-  } else {
-    auto instance = Instance(bitstream);
-    instance.AllocateBuffers(args...);
-    instance.WriteToDevice();
-    instance.SetArg(args...);
-    instance.Exec();
-    instance.ReadFromDevice();
-    instance.Finish();
-  }
+template <typename... Args>
+void Invoke(const std::string& bitstream, Args&&... args) {
+  auto instance = Instance(bitstream);
+  instance.AllocateBuffers(args...);
+  instance.WriteToDevice();
+  instance.SetArg(args...);
+  instance.Exec();
+  instance.ReadFromDevice();
+  instance.Finish();
 }
 
 #ifndef KEEP_CL_CHECK

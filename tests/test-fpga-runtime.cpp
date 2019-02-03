@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
     c[i] = 0;
     c_base[i] = 1;
   }
-  fpga::Invoke(argv[1], VecAdd, fpga::ReadOnly(a, n), fpga::ReadOnly(b, n),
-         fpga::WriteOnly(c, n), n);
+  fpga::Invoke(argv[1], fpga::ReadOnly(a, n), fpga::ReadOnly(b, n),
+               fpga::WriteOnly(c, n), n);
   VecAdd(a, b, c_base, n);
   for (int i = 0; i < n; ++i) {
     if (c[i] != c_base[i]) {
