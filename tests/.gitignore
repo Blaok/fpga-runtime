@@ -5,4 +5,6 @@
 *.xo
 .Xil
 .run
+_x
+vadd
 emconfig.json
