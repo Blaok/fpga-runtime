@@ -1,5 +1,5 @@
 Package: libfpga-runtime-dev
-Version: 2019020301
+Version: 0.0.20190203.1
 Maintainer: Blaok Chi
 Architecture: amd64
 Description: FPGA Runtime for PCIe-Based FPGAs
