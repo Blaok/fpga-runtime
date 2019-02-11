@@ -1,33 +1,75 @@
+# This is used to identify your application
 APP ?= vadd
+
+# This is the kernel name in your HLS code
 KERNEL_NAME ?= VecAdd
+
+# Only 1 kernel file is allowed and it cannot include any customized header
 KERNEL_SRC ?= test-fpga-kernel.cpp
+
+# Multiple files allowed; headers will be filtered out for compilation
 HOST_SRCS ?= test-fpga-runtime.cpp
+
+# Platform name
 PLATFORM ?= xilinx_u200_xdma_201830_1
 
-XOCC ?= xocc
-TARGET ?= sw_emu
-CXXFLAGS += -std=c++11 -O3 -I../include -I$(XILINX_XRT)/include
-LDFLAGS += -L../lib -L$(XILINX_XRT)/lib
+# Externally set CXXFLAGS and LDFLAGS are honored
+CXXFLAGS += -std=c++11 -O3
 LDFLAGS += -lfpga-runtime -ltinyxml -lxilinxopencl
 
-test: $(APP) $(APP).$(PLATFORM).$(TARGET).xclbin
-	./$(APP) $(APP).$(PLATFORM).$(TARGET).xclbin 1000
+# DRAM map mappings
+DRAM_MAPS ?= gmem0:DDR[0] gmem1:DDR[1] gmem2:DDR[2]
+
+# Host arguments
+HOST_ARGS ?= 1000
+
+# DO NOT MODIFY UNLESS YOU KNOW WHAT YOU ARE DOING
+MAKE_NO_PRINT_DIR := $(MAKE) --no-print-directory
+XOCC ?= xocc
+TARGET ?= sw_emu
+XO_NAME := $(APP).$(PLATFORM).$(subst hw_emu,hw,$(TARGET)).xo
+XCLBIN_NAME := $(APP).$(PLATFORM).$(TARGET).xclbin
+XOCC_FLAGS := --platform $(PLATFORM)
+XOCC_CFLAGS := -t $(subst hw_emu,hw,$(TARGET)) --kernel $(KERNEL_NAME)
+XOCC_CFLAGS += --xp prop:kernel.$(KERNEL_NAME).kernel_flags="-std=c++11"
+XOCC_LDFLAGS := -t $(TARGET) --max_memory_ports $(KERNEL_NAME)
+XOCC_LDFLAGS += --nk $(KERNEL_NAME):1:$(KERNEL_NAME)
+XOCC_LDFLAGS += $(foreach map,$(DRAM_MAPS),--sp $(KERNEL_NAME).m_axi_$(map))
+
+.PHONY: csim cosim hw exe hls bitstream test
+# Action aliases
+csim:
+	@$(MAKE_NO_PRINT_DIR) TARGET=sw_emu test
+
+cosim:
+	@$(MAKE_NO_PRINT_DIR) TARGET=hw_emu test
+
+hw:
+	@$(MAKE_NO_PRINT_DIR) TARGET=hw test
+
+# Target aliases
+exe: $(APP)
+
+hls:
+	@$(MAKE_NO_PRINT_DIR) TARGET=hw $(APP).$(PLATFORM).hw.xo
+
+bitstream:
+	@$(MAKE_NO_PRINT_DIR) TARGET=hw $(APP).$(PLATFORM).hw.xclbin
+
+test: $(APP) $(XCLBIN_NAME)
+	@touch .time
+	./$(APP) $(XCLBIN_NAME) $(HOST_ARGS)
+	@find *.log xocc* .run/ -newer .time -delete 2>/dev/null;exit 0
+	@rm .time
 
 $(APP): $(HOST_SRCS) $(KERNEL_SRC)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(filter-out %.h,$^) -o $@ $(LDFLAGS)
 
-$(APP).$(PLATFORM).$(TARGET).xo: $(KERNEL_SRC)
-	$(XOCC) -t $(TARGET) -c $< -o $@ \
-	  --platform $(PLATFORM) --kernel $(KERNEL_NAME) \
-	  --xp prop:kernel.$(KERNEL_NAME).kernel_flags="-std=c++11"
+$(XO_NAME): $(KERNEL_SRC)
+	$(XOCC) $(XOCC_FLAGS) $(XOCC_CFLAGS) -c $< -o $@
 
-$(APP).$(PLATFORM).$(TARGET).xclbin: $(APP).$(PLATFORM).$(TARGET).xo
-	$(XOCC) -t $(TARGET) -l $< -o $@ --platform $(PLATFORM) \
-	  --max_memory_ports $(KERNEL_NAME) \
-	  --nk $(KERNEL_NAME):1:$(KERNEL_NAME) \
-	  --sp $(KERNEL_NAME).m_axi_gmem0:DDR[0] \
-	  --sp $(KERNEL_NAME).m_axi_gmem1:DDR[1] \
-	  --sp $(KERNEL_NAME).m_axi_gmem2:DDR[2]
+$(XCLBIN_NAME): $(XO_NAME)
+	$(XOCC) $(XOCC_FLAGS) $(XOCC_LDFLAGS) -l $< -o $@
 
 emconfig.json:
-	emconfigutil --platform $(PLATFORM)
+	emconfigutil $(XOCC_FLAGS)
