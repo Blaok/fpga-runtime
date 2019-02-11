@@ -1,4 +1,4 @@
-libfpga-runtime.deb:
+libfpga-runtime.deb: ../src/*.h ../src/*.cpp DEBIAN/control
 	$(MAKE) -C ../src
 	mkdir -p $(basename $@)/usr
 	cp -r ../{include,lib} $(basename $@)/usr

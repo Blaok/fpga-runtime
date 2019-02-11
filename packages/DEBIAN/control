@@ -1,6 +1,6 @@
 Package: libfpga-runtime-dev
-Version: 0.0.20190203.1
+Version: 0.0.20190211.1
 Maintainer: Blaok Chi
 Architecture: amd64
 Description: FPGA Runtime for PCIe-Based FPGAs
-Depends: libtinyxml-dev
+Depends: jq, libtinyxml-dev

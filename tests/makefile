@@ -70,6 +70,3 @@ $(XO_NAME): $(KERNEL_SRC)
 
 $(XCLBIN_NAME): $(XO_NAME)
 	$(XOCC) $(XOCC_FLAGS) $(XOCC_LDFLAGS) -l $< -o $@
-
-emconfig.json:
-	emconfigutil $(XOCC_FLAGS)

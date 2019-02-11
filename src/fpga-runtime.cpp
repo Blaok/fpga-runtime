@@ -25,7 +25,7 @@ namespace fpga {
 
 cl::Program::Binaries LoadBinaryFile(const string& file_name) {
   clog << "INFO: Loading " << file_name << endl;
-  std::ifstream stream(file_name.c_str(), std::ios::binary);
+  std::ifstream stream(file_name, std::ios::binary);
   vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
                                  std::istreambuf_iterator<char>());
   return {contents};
@@ -105,6 +105,15 @@ Instance::Instance(const string& bitstream) {
       throw runtime_error("unknown bitstream file");
     }
   }
+  if (getenv("XCL_EMULATION_MODE")) {
+    string cmd = "[ \"$(jq -r '.Platform.Boards[]|"
+      "select(.Devices[]|select(.Name==\"" + target_device_name +
+      "\"))' emconfig.json)\" != \"\" ] || emconfigutil --platform " +
+      target_device_name;
+    if (system(cmd.c_str())) {
+      throw std::runtime_error("emconfigutil failed");
+    }
+  }
   vector<cl::Platform> platforms;
   CL_CHECK(cl::Platform::get(&platforms));
   cl_int err;
@@ -112,7 +121,7 @@ Instance::Instance(const string& bitstream) {
     string platformName = platform.getInfo<CL_PLATFORM_NAME>(&err);
     CL_CHECK(err);
     clog << "INFO: Found platform: " << platformName.c_str() << endl;
-    if (platformName == vendor_name){
+    if (platformName == vendor_name) {
       vector<cl::Device> devices;
       CL_CHECK(platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &devices));
       for (const auto& device : devices) {
