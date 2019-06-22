@@ -1,9 +1,11 @@
 #ifndef OPENCL_ERRORS_H_
 #define OPENCL_ERRORS_H_
 
-#define CASE(err) case err: return #err;
+#define CASE(err) \
+  case err:       \
+    return #err;
 inline const char* ToString(cl_int err) {
-  switch(err) {
+  switch (err) {
     CASE(CL_SUCCESS);
     CASE(CL_DEVICE_NOT_FOUND);
     CASE(CL_DEVICE_NOT_AVAILABLE);
@@ -67,7 +69,8 @@ inline const char* ToString(cl_int err) {
     CASE(CL_INVALID_PIPE_SIZE);
     CASE(CL_INVALID_DEVICE_QUEUE);
 
-    default: return "CL_UNKNOWN_ERROR";
+    default:
+      return "CL_UNKNOWN_ERROR";
   }
 }
 #undef CASE

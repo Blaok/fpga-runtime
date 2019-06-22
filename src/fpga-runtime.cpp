@@ -9,10 +9,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include <CL/cl2.hpp>
 #include <CL/cl_ext.h>
 #include <tinyxml.h>
 #include <xclbin.h>
+#include <CL/cl2.hpp>
 
 using std::clog;
 using std::endl;
@@ -55,20 +55,25 @@ Instance::Instance(const string& bitstream) {
         default:
           throw runtime_error("unknown xclbin mode");
       }
-      target_device_name = reinterpret_cast<const char*>(
-          axlf_top->m_header.m_platformVBNV);
+      target_device_name =
+          reinterpret_cast<const char*>(axlf_top->m_header.m_platformVBNV);
       auto metadata = xclbin::get_axlf_section(axlf_top, EMBEDDED_METADATA);
       if (metadata != nullptr) {
         TiXmlDocument doc;
-        doc.Parse(reinterpret_cast<const char*>(axlf_top) +
-                  metadata->m_sectionOffset, 0, TIXML_ENCODING_UTF8);
+        doc.Parse(
+            reinterpret_cast<const char*>(axlf_top) + metadata->m_sectionOffset,
+            0, TIXML_ENCODING_UTF8);
         kernel_name = doc.FirstChildElement("project")
-          ->FirstChildElement("platform")->FirstChildElement("device")
-          ->FirstChildElement("core")->FirstChildElement("kernel")
-          ->Attribute("name");
+                          ->FirstChildElement("platform")
+                          ->FirstChildElement("device")
+                          ->FirstChildElement("core")
+                          ->FirstChildElement("kernel")
+                          ->Attribute("name");
         string target_meta = doc.FirstChildElement("project")
-          ->FirstChildElement("platform")->FirstChildElement("device")
-          ->FirstChildElement("core")->Attribute("target");
+                                 ->FirstChildElement("platform")
+                                 ->FirstChildElement("device")
+                                 ->FirstChildElement("core")
+                                 ->Attribute("target");
         // m_mode doesn't always work
         if (target_meta == "hw_em") {
           setenv("XCL_EMULATION_MODE", "hw_emu", 0);
@@ -94,8 +99,7 @@ Instance::Instance(const string& bitstream) {
       auto conn = xclbin::get_axlf_section(axlf_top, CONNECTIVITY);
       if (conn != nullptr) {
         auto connect = reinterpret_cast<const connectivity*>(
-            reinterpret_cast<const char*>(axlf_top) +
-            conn->m_sectionOffset);
+            reinterpret_cast<const char*>(axlf_top) + conn->m_sectionOffset);
         for (int i = 0; i < connect->m_count; ++i) {
           const connection& c = connect->m_connection[i];
           arg_table_[c.arg_index] = memory_table[c.mem_data_index];
@@ -106,10 +110,12 @@ Instance::Instance(const string& bitstream) {
     }
   }
   if (getenv("XCL_EMULATION_MODE")) {
-    string cmd = "[ \"$(jq -r '.Platform.Boards[]|"
-      "select(.Devices[]|select(.Name==\"" + target_device_name +
-      "\"))' emconfig.json)\" != \"\" ] || emconfigutil --platform " +
-      target_device_name;
+    string cmd =
+        "[ \"$(jq -r '.Platform.Boards[]|"
+        "select(.Devices[]|select(.Name==\"" +
+        target_device_name +
+        "\"))' emconfig.json)\" != \"\" ] || emconfigutil --platform " +
+        target_device_name;
     if (system(cmd.c_str())) {
       throw std::runtime_error("emconfigutil failed");
     }
@@ -135,13 +141,14 @@ Instance::Instance(const string& bitstream) {
             continue;
           }
           CL_CHECK(err);
-          cmd_ = cl::CommandQueue(
-              context_, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |
-              CL_QUEUE_PROFILING_ENABLE, &err);
+          cmd_ = cl::CommandQueue(context_, device,
+                                  CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |
+                                      CL_QUEUE_PROFILING_ENABLE,
+                                  &err);
           CL_CHECK(err);
           vector<int> binary_status;
-          program_ = cl::Program(
-              context_, {device}, binaries, &binary_status, &err);
+          program_ =
+              cl::Program(context_, {device}, binaries, &binary_status, &err);
           for (auto status : binary_status) {
             CL_CHECK(status);
           }
@@ -155,8 +162,8 @@ Instance::Instance(const string& bitstream) {
   }
 }
 
-cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags,
-                                  size_t size, void* host_ptr) {
+cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
+                                  void* host_ptr) {
   cl_mem_ext_ptr_t ext;
   if (arg_table_.count(index)) {
     if (arg_table_[index] == "bank0") {
@@ -185,21 +192,22 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags,
 
 void Instance::WriteToDevice() {
   load_event_.resize(1);
-  CL_CHECK(cmd_.enqueueMigrateMemObjects(
-      load_buffers_, /* flags = */ 0, nullptr, load_event_.data()));
+  CL_CHECK(cmd_.enqueueMigrateMemObjects(load_buffers_, /* flags = */ 0,
+                                         nullptr, load_event_.data()));
 }
 
 void Instance::ReadFromDevice() {
   store_event_.resize(1);
-  CL_CHECK(cmd_.enqueueMigrateMemObjects(
-      store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
-      store_event_.data()));
+  CL_CHECK(cmd_.enqueueMigrateMemObjects(store_buffers_,
+                                         CL_MIGRATE_MEM_OBJECT_HOST,
+                                         &compute_event_, store_event_.data()));
 }
 
 void Instance::Exec() {
   compute_event_.resize(1);
   CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NDRange(1), cl::NDRange(1),
-      cl::NDRange(1), &load_event_, compute_event_.data()));
+                                     cl::NDRange(1), &load_event_,
+                                     compute_event_.data()));
 }
 
 void Instance::Finish() {
@@ -228,15 +236,15 @@ cl_ulong Instance::StoreProfilingInfo() {
 }
 cl_ulong Instance::LoadTimeNanoSeconds() {
   return LoadProfilingInfo<CL_PROFILING_COMMAND_END>() -
-    LoadProfilingInfo<CL_PROFILING_COMMAND_START>();
+         LoadProfilingInfo<CL_PROFILING_COMMAND_START>();
 }
 cl_ulong Instance::ComputeTimeNanoSeconds() {
   return ComputeProfilingInfo<CL_PROFILING_COMMAND_END>() -
-    ComputeProfilingInfo<CL_PROFILING_COMMAND_START>();
+         ComputeProfilingInfo<CL_PROFILING_COMMAND_START>();
 }
 cl_ulong Instance::StoreTimeNanoSeconds() {
   return StoreProfilingInfo<CL_PROFILING_COMMAND_END>() -
-    StoreProfilingInfo<CL_PROFILING_COMMAND_START>();
+         StoreProfilingInfo<CL_PROFILING_COMMAND_START>();
 }
 double Instance::LoadTimeSeconds() { return LoadTimeNanoSeconds() / 1e9; }
 double Instance::ComputeTimeSeconds() { return ComputeTimeNanoSeconds() / 1e9; }
@@ -262,4 +270,4 @@ template cl_ulong Instance::ComputeProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
 template cl_ulong Instance::StoreProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
 template cl_ulong Instance::StoreProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
 
-}   // namespace fpga
+}  // namespace fpga

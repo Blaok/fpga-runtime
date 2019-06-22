@@ -8,8 +8,7 @@ using std::clog;
 using std::endl;
 
 extern "C" {
-void VecAdd(const float* a, const float* b,
-            float* c, uint64_t n);
+void VecAdd(const float* a, const float* b, float* c, uint64_t n);
 }
 
 int main(int argc, char* argv[]) {

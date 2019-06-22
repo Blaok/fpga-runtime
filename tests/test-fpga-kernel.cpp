@@ -2,8 +2,7 @@
 
 extern "C" {
 
-void VecAdd(const float* a, const float* b,
-            float* c, uint64_t n) {
+void VecAdd(const float* a, const float* b, float* c, uint64_t n) {
 #pragma HLS interface m_axi port = a offset = slave bundle = gmem0
 #pragma HLS interface m_axi port = b offset = slave bundle = gmem1
 #pragma HLS interface m_axi port = c offset = slave bundle = gmem2
@@ -17,5 +16,4 @@ void VecAdd(const float* a, const float* b,
     c[i] = a[i] + b[i];
   }
 }
-
 }

@@ -18,8 +18,8 @@ namespace fpga {
 #define CL_CHECK(err) ClCheck((err), __FILE__, __LINE__);
 inline void ClCheck(cl_int err, const char* file, int line) {
   if (err != CL_SUCCESS) {
-    throw std::runtime_error(
-        std::string(file) + ":" + std::to_string(line) + ": " + ToString(err));
+    throw std::runtime_error(std::string(file) + ":" + std::to_string(line) +
+                             ": " + ToString(err));
   }
 }
 
@@ -27,6 +27,7 @@ template <typename T>
 class Buffer {
   T* ptr_;
   size_t n_;
+
  public:
   Buffer(T* ptr, size_t n) : ptr_(ptr), n_(n) {}
   operator T*() const { return ptr_; }
@@ -36,18 +37,30 @@ class Buffer {
   size_t SizeInBytes() const { return n_ * sizeof(T); }
 };
 template <typename T>
-class RoBuf : public Buffer<T> { using Buffer<T>::Buffer; };
+class RoBuf : public Buffer<T> {
+  using Buffer<T>::Buffer;
+};
 template <typename T>
-class WoBuf : public Buffer<T> { using Buffer<T>::Buffer; };
+class WoBuf : public Buffer<T> {
+  using Buffer<T>::Buffer;
+};
 template <typename T>
-class RwBuf : public Buffer<T> { using Buffer<T>::Buffer; };
+class RwBuf : public Buffer<T> {
+  using Buffer<T>::Buffer;
+};
 
 template <typename T>
-RoBuf<T> ReadOnly(T* ptr, size_t n) { return RoBuf<T>(ptr, n); }
+RoBuf<T> ReadOnly(T* ptr, size_t n) {
+  return RoBuf<T>(ptr, n);
+}
 template <typename T>
-WoBuf<T> WriteOnly(T* ptr, size_t n) { return WoBuf<T>(ptr, n); }
+WoBuf<T> WriteOnly(T* ptr, size_t n) {
+  return WoBuf<T>(ptr, n);
+}
 template <typename T>
-RwBuf<T> ReadWrite(T* ptr, size_t n) { return RwBuf<T>(ptr, n); }
+RwBuf<T> ReadWrite(T* ptr, size_t n) {
+  return RwBuf<T>(ptr, n);
+}
 
 class Instance {
   cl::Context context_;
@@ -61,12 +74,15 @@ class Instance {
   std::vector<cl::Event> load_event_;
   std::vector<cl::Event> compute_event_;
   std::vector<cl::Event> store_event_;
+
  public:
   Instance(const std::string& bitstream);
 
   // SetArg
   template <typename T>
-  void SetArg(int index, const T& arg) { kernel_.setArg(index, arg); }
+  void SetArg(int index, const T& arg) {
+    kernel_.setArg(index, arg);
+  }
   template <typename T>
   void SetArg(int index, const RoBuf<T>& arg) {
     kernel_.setArg(index, buffer_table_[index]);
@@ -74,7 +90,7 @@ class Instance {
   template <typename T>
   void SetArg(int index, const WoBuf<T>& arg) {
     kernel_.setArg(index, buffer_table_[index]);
-  } 
+  }
   template <typename T>
   void SetArg(int index, const RwBuf<T>& arg) {
     kernel_.setArg(index, buffer_table_[index]);
@@ -85,13 +101,16 @@ class Instance {
     SetArg(index + 1, other_args...);
   }
   template <typename... Args>
-  void SetArg(const Args&... args) { SetArg(0, args...); }
+  void SetArg(const Args&... args) {
+    SetArg(0, args...);
+  }
 
-  cl::Buffer CreateBuffer(int index, cl_mem_flags flags,
-                          size_t size, void* host_ptr);
+  cl::Buffer CreateBuffer(int index, cl_mem_flags flags, size_t size,
+                          void* host_ptr);
 
   // AllocateBuffers
-  template <typename T> void AllocateBuffers(int index, const T& arg) {}
+  template <typename T>
+  void AllocateBuffers(int index, const T& arg) {}
   template <typename T>
   void AllocateBuffers(int index, const RoBuf<T>& arg) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
@@ -117,16 +136,21 @@ class Instance {
     AllocateBuffers(index + 1, other_args...);
   }
   template <typename... Args>
-  void AllocateBuffers(const Args&... args) { AllocateBuffers(0, args...); }
+  void AllocateBuffers(const Args&... args) {
+    AllocateBuffers(0, args...);
+  }
 
   void WriteToDevice();
   void ReadFromDevice();
   void Exec();
   void Finish();
 
-  template <cl_profiling_info name> cl_ulong LoadProfilingInfo();
-  template <cl_profiling_info name> cl_ulong ComputeProfilingInfo();
-  template <cl_profiling_info name> cl_ulong StoreProfilingInfo();
+  template <cl_profiling_info name>
+  cl_ulong LoadProfilingInfo();
+  template <cl_profiling_info name>
+  cl_ulong ComputeProfilingInfo();
+  template <cl_profiling_info name>
+  cl_ulong StoreProfilingInfo();
   cl_ulong LoadTimeNanoSeconds();
   cl_ulong ComputeTimeNanoSeconds();
   cl_ulong StoreTimeNanoSeconds();
@@ -153,6 +177,6 @@ Instance Invoke(const std::string& bitstream, Args&&... args) {
 #undef CL_CHECK
 #endif  // KEEP_CL_CHECK
 
-}   // namespace fpga
+}  // namespace fpga
 
 #endif  // FPGA_RUNTIME_H_
