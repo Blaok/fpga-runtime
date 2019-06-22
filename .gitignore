@@ -1,4 +1,4 @@
 *.sw?
+.vscode
+build/
 include/
-lib/
-obj/
