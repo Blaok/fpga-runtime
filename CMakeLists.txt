@@ -6,6 +6,7 @@ project(frt)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
+find_package(XRT REQUIRED)
 
 add_library(frt STATIC)
 target_sources(frt
