@@ -53,7 +53,7 @@ Instance::Instance(const string& bitstream) {
   string vendor_name;
   string kernel_name;
   for (const auto& binary : binaries) {
-    if (memcmp(binary.data(), "xclbin2", 8) == 0) {
+    if (binary.size() >= 8 && memcmp(binary.data(), "xclbin2", 8) == 0) {
       vendor_name = "Xilinx";
       const auto axlf_top = reinterpret_cast<const axlf*>(binary.data());
       switch (axlf_top->m_header.m_mode) {
@@ -122,7 +122,7 @@ Instance::Instance(const string& bitstream) {
         }
       }
     } else {
-      throw runtime_error("unknown bitstream file");
+      throw runtime_error("unexpected bitstream file");
     }
   }
   if (getenv("XCL_EMULATION_MODE")) {
