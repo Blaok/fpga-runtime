@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -18,17 +19,32 @@ using std::clog;
 using std::endl;
 using std::runtime_error;
 using std::string;
+using std::unique_ptr;
 using std::unordered_map;
 using std::vector;
 
 namespace fpga {
 
+namespace internal {
+string Exec(const char* cmd) {
+  std::string result;
+  unique_ptr<FILE, decltype(&pclose)> pipe{popen(cmd, "r"), pclose};
+  if (pipe == nullptr) {
+    throw runtime_error(string{"cannot execute: "} + cmd);
+  }
+  char c;
+  while (c = fgetc(pipe.get()), !feof(pipe.get())) {
+    result += c;
+  }
+  return result;
+}
+}  // namespace internal
+
 cl::Program::Binaries LoadBinaryFile(const string& file_name) {
   clog << "INFO: Loading " << file_name << endl;
   std::ifstream stream(file_name, std::ios::binary);
-  vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
-                                 std::istreambuf_iterator<char>());
-  return {contents};
+  return {{std::istreambuf_iterator<char>(stream),
+           std::istreambuf_iterator<char>()}};
 }
 
 Instance::Instance(const string& bitstream) {
@@ -111,14 +127,33 @@ Instance::Instance(const string& bitstream) {
   }
   if (getenv("XCL_EMULATION_MODE")) {
     string cmd =
-        "[ \"$(jq -r '.Platform.Boards[]|"
-        "select(.Devices[]|select(.Name==\"" +
+        R"([ "$(jq -r '.Platform.Boards[]|select(.Devices[]|select(.Name==")" +
         target_device_name +
-        "\"))' emconfig.json)\" != \"\" ] || emconfigutil --platform " +
+        R"R("))' emconfig.json 2>/dev/null)" != "" ] || )R"
+        "emconfigutil --platform " +
         target_device_name;
     if (system(cmd.c_str())) {
       throw std::runtime_error("emconfigutil failed");
     }
+  }
+
+  if (string{"sw_emu"} == getenv("XCL_EMULATION_MODE")) {
+    string ld_library_path;
+    if (auto xilinx_sdx = getenv("XILINX_SDX")) {
+      // find LD_LIBRARY_PATH by sourcing ${XILINX_SDX}/settings64.sh
+      ld_library_path = internal::Exec(
+          R"(bash -c '. "${XILINX_SDX}/settings64.sh" && )"
+          R"(printf "${LD_LIBRARY_PATH}"')");
+    } else {
+      // find XILINX_SDX and LD_LIBRARY_PATH with vivado_hls
+      // ld_library_path is null-separated string of both env vars
+      ld_library_path = internal::Exec(
+          R"(bash -c '. "$(vivado_hls -r)/settings64.sh" && )"
+          R"(printf "${LD_LIBRARY_PATH}\0${XILINX_SDX}"')");
+      setenv("XILINX_SDX",
+             ld_library_path.c_str() + strlen(ld_library_path.c_str()) + 1, 1);
+    }
+    setenv("LD_LIBRARY_PATH", ld_library_path.c_str(), 1);
   }
   vector<cl::Platform> platforms;
   CL_CHECK(cl::Platform::get(&platforms));
@@ -166,16 +201,16 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
                                   void* host_ptr) {
   cl_mem_ext_ptr_t ext;
   if (arg_table_.count(index)) {
-    if (arg_table_[index] == "bank0") {
-      ext.flags = XCL_MEM_DDR_BANK0;
-    } else if (arg_table_[index] == "bank1") {
-      ext.flags = XCL_MEM_DDR_BANK1;
-    } else if (arg_table_[index] == "bank2") {
-      ext.flags = XCL_MEM_DDR_BANK2;
-    } else if (arg_table_[index] == "bank3") {
-      ext.flags = XCL_MEM_DDR_BANK3;
+    const unordered_map<string, decltype(XCL_MEM_DDR_BANK0)> kTagTable{
+        {"bank0", XCL_MEM_DDR_BANK0},
+        {"bank1", XCL_MEM_DDR_BANK1},
+        {"bank2", XCL_MEM_DDR_BANK2},
+        {"bank3", XCL_MEM_DDR_BANK3}};
+    auto flag = kTagTable.find(arg_table_[index]);
+    if (flag != kTagTable.end()) {
+      ext.flags = flag->second;
     } else {
-      clog << "WARNING: unknown argument memory tag: " << arg_table_[index]
+      clog << "WARNING: Unknown argument memory tag: " << arg_table_[index]
            << endl;
     }
     ext.obj = host_ptr;
