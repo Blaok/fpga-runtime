@@ -148,8 +148,8 @@ Instance::Instance(const string& bitstream) {
       // find XILINX_SDX and LD_LIBRARY_PATH with vivado_hls
       // ld_library_path is null-separated string of both env vars
       ld_library_path = internal::Exec(
-          R"(bash -c '. "$(vivado_hls -r)/settings64.sh" && )"
-          R"(printf "${LD_LIBRARY_PATH}\0${XILINX_SDX}"')");
+          R"(bash -c '. "$(vivado_hls -r -l /dev/null | grep "^/"))"
+          R"(/settings64.sh" && printf "${LD_LIBRARY_PATH}\0${XILINX_SDX}"')");
       setenv("XILINX_SDX",
              ld_library_path.c_str() + strlen(ld_library_path.c_str()) + 1, 1);
     }
