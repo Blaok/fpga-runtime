@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "fpga-runtime.h"
+#include "frt.h"
 
 using std::clog;
 using std::endl;

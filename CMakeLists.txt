@@ -10,9 +10,9 @@ find_package(TinyXML REQUIRED)
 add_library(frt STATIC)
 target_sources(frt
                PRIVATE
-               src/fpga-runtime.cpp
+               src/frt.cpp
                PUBLIC
-               src/fpga-runtime.h
+               src/frt.h
                src/opencl-errors.h)
 target_compile_features(frt
                         PUBLIC

@@ -6,7 +6,7 @@ project(vadd)
 
 add_subdirectory(frt)
 
-add_executable(vadd test-fpga-kernel.cpp test-fpga-runtime.cpp)
+add_executable(vadd test-frt-host.cpp test-frt-kernel.cpp)
 target_compile_features(vadd PUBLIC cxx_auto_type)
 target_link_libraries(vadd frt)
 
@@ -19,7 +19,7 @@ add_xocc_targets_with_alias(${CMAKE_CURRENT_BINARY_DIR}
                             xocc
                             ${KERNEL}
                             ${XRT_PLATFORM}
-                            test-fpga-kernel.cpp
+                            test-frt-kernel.cpp
                             "gmem0:DDR[0];gmem1:DDR[1];gmem2:DDR[2]")
 
 add_custom_target(emu DEPENDS csim cosim)

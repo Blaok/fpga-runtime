@@ -1,5 +1,5 @@
 #define KEEP_CL_CHECK
-#include "fpga-runtime.h"
+#include "frt.h"
 
 #include <cstring>
 
