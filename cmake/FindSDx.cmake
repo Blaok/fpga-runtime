@@ -1,8 +1,15 @@
-cmake_minimum_required(VERSION 3.1)
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
+
+find_program(XOCC xocc PATHS "$ENV{XILINX_SDX}/bin")
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(SDx
+                                  FOUND_VAR
+                                  SDx_FOUND
+                                  REQUIRED_VARS
+                                  XOCC)
 
 function(add_xocc_compile_target
          target_name
@@ -13,7 +20,6 @@ function(add_xocc_compile_target
          temp_dir
          input)
 
-  get_target_property(xocc ${input} XOCC)
   get_target_property(kernel ${input} KERNEL)
   get_target_property(platform ${input} PLATFORM)
   get_target_property(dram_mapping ${input} DRAM_MAPPING)
@@ -28,7 +34,7 @@ function(add_xocc_compile_target
   file(MAKE_DIRECTORY ${cwd})
 
   add_custom_command(OUTPUT ${output}
-                     COMMAND ${xocc}
+                     COMMAND ${XOCC}
                              --output ${output}
                              --compile
                              --kernel ${kernel}
@@ -46,9 +52,7 @@ function(add_xocc_compile_target
 
   add_custom_target(${target_name} DEPENDS ${output})
   set_target_properties(${target_name}
-                        PROPERTIES XOCC
-                                   ${xocc}
-                                   KERNEL
+                        PROPERTIES KERNEL
                                    ${kernel}
                                    PLATFORM
                                    ${platform}
@@ -70,7 +74,6 @@ function(add_xocc_link_target
          temp_dir
          input)
 
-  get_target_property(xocc ${input} XOCC)
   get_target_property(kernel ${input} KERNEL)
   get_target_property(platform ${input} PLATFORM)
   get_target_property(dram_mapping ${input} DRAM_MAPPING)
@@ -88,7 +91,7 @@ function(add_xocc_link_target
   file(MAKE_DIRECTORY ${cwd})
 
   add_custom_command(OUTPUT ${output}
-                     COMMAND ${xocc}
+                     COMMAND ${XOCC}
                              --output ${output}
                              --link
                              --platform ${platform}
@@ -109,9 +112,7 @@ function(add_xocc_link_target
 
   add_custom_target(${target_name} DEPENDS ${output})
   set_target_properties(${target_name}
-                        PROPERTIES XOCC
-                                   ${xocc}
-                                   KERNEL
+                        PROPERTIES KERNEL
                                    ${kernel}
                                    PLATFORM
                                    ${platform}
@@ -126,7 +127,6 @@ endfunction()
 
 function(add_xocc_targets
          output_dir
-         xocc
          kernel
          platform
          input_file
@@ -139,9 +139,7 @@ function(add_xocc_targets
   set(hw_xclbin_target hw_xclbin.${kernel}.${platform})
   add_custom_target(${hls_src_target} DEPENDS ${input_file})
   set_target_properties(${hls_src_target}
-                        PROPERTIES XOCC
-                                   ${xocc}
-                                   KERNEL
+                        PROPERTIES KERNEL
                                    ${kernel}
                                    PLATFORM
                                    ${platform}
@@ -205,13 +203,11 @@ endfunction()
 
 function(add_xocc_targets_with_alias
          output_dir
-         xocc
          kernel
          platform
          input_file
          dram_mapping)
   add_xocc_targets(${output_dir}
-                   ${xocc}
                    ${kernel}
                    ${platform}
                    ${input_file}

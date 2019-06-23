@@ -1,14 +1,19 @@
 cmake_minimum_required(VERSION 3.1)
 
-include(../xocc.cmake)
-
 project(vadd)
 
 add_subdirectory(frt)
 
-add_executable(vadd test-frt-host.cpp test-frt-kernel.cpp)
-target_compile_features(vadd PUBLIC cxx_auto_type)
-target_link_libraries(vadd frt)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
+find_package(SDx REQUIRED)
+
+add_executable(vadd)
+target_sources(vadd
+               PRIVATE
+               test-frt-host.cpp
+               test-frt-kernel.cpp)
+target_compile_features(vadd PRIVATE cxx_auto_type)
+target_link_libraries(vadd PRIVATE frt)
 
 if(NOT XRT_PLATFORM)
   set(XRT_PLATFORM xilinx_u200_xdma_201830_1)
@@ -16,7 +21,6 @@ endif()
 set(KERNEL VecAdd)
 
 add_xocc_targets_with_alias(${CMAKE_CURRENT_BINARY_DIR}
-                            xocc
                             ${KERNEL}
                             ${XRT_PLATFORM}
                             test-frt-kernel.cpp
