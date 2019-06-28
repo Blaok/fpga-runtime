@@ -137,7 +137,8 @@ Instance::Instance(const string& bitstream) {
     }
   }
 
-  if (string{"sw_emu"} == getenv("XCL_EMULATION_MODE")) {
+  const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE");
+  if (xcl_emulation_mode != nullptr && string{"sw_emu"} == xcl_emulation_mode) {
     string ld_library_path;
     if (auto xilinx_sdx = getenv("XILINX_SDX")) {
       // find LD_LIBRARY_PATH by sourcing ${XILINX_SDX}/settings64.sh
