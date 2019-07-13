@@ -1,11 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
-
-project(vadd)
-
-add_subdirectory(frt)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
-find_package(SDx REQUIRED)
+include(../cmake/FindSDx.cmake)
 
 add_executable(vadd)
 target_sources(vadd
@@ -47,3 +40,6 @@ add_custom_target(
           10000000
   DEPENDS vadd hw_xclbin.${KERNEL}.${XRT_PLATFORM}
   WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+
+add_test(NAME csim COMMAND make csim)
+add_test(NAME cosim COMMAND make cosim)
