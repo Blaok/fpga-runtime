@@ -1,0 +1,56 @@
+include(../../cmake/FindSDx.cmake)
+
+add_executable(xdma-vadd)
+target_sources(xdma-vadd
+               PRIVATE
+               xdma-host.cpp
+               xdma-kernel.cpp)
+target_compile_features(xdma-vadd PRIVATE cxx_auto_type)
+target_link_libraries(xdma-vadd PRIVATE frt)
+
+if(NOT XRT_PLATFORM)
+  set(XRT_PLATFORM xilinx_u250_xdma_201830_2)
+endif()
+set(KERNEL VecAdd)
+
+add_xocc_targets(${CMAKE_CURRENT_BINARY_DIR}
+                 ${KERNEL}
+                 ${XRT_PLATFORM}
+                 xdma-kernel.cpp
+                 "gmem0:DDR[0];gmem1:DDR[1];gmem2:DDR[2]")
+
+add_custom_target(
+  xdma-csim
+  COMMAND xdma-vadd
+          $<TARGET_PROPERTY:sw_emu_xclbin.${KERNEL}.${XRT_PLATFORM},FILE_NAME>
+          1000000
+  DEPENDS xdma-vadd sw_emu_xclbin.${KERNEL}.${XRT_PLATFORM}
+  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+add_custom_target(
+  xdma-cosim
+  COMMAND xdma-vadd
+          $<TARGET_PROPERTY:hw_emu_xclbin.${KERNEL}.${XRT_PLATFORM},FILE_NAME>
+          1000
+  DEPENDS xdma-vadd hw_emu_xclbin.${KERNEL}.${XRT_PLATFORM}
+  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+add_custom_target(
+  xdma-hw
+  COMMAND xdma-vadd
+          $<TARGET_PROPERTY:hw_xclbin.${KERNEL}.${XRT_PLATFORM},FILE_NAME>
+          10000000
+  DEPENDS xdma-vadd hw_xclbin.${KERNEL}.${XRT_PLATFORM}
+  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+add_custom_target(xdma-emu DEPENDS xdma-csim xdma-cosim)
+
+add_test(NAME xdma-csim
+         COMMAND ${CMAKE_COMMAND}
+                 --build
+                 ${CMAKE_BINARY_DIR}
+                 --target
+                 xdma-csim)
+add_test(NAME xdma-cosim
+         COMMAND ${CMAKE_COMMAND}
+                 --build
+                 ${CMAKE_BINARY_DIR}
+                 --target
+                 xdma-cosim)
