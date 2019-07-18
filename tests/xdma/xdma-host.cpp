@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
     c[i] = 0;
     c_base[i] = 1;
   }
-  auto instance = fpga::Invoke(argv[1], fpga::ReadOnly(a, n),
-                               fpga::ReadOnly(b, n), fpga::WriteOnly(c, n), n);
+  auto instance = fpga::Invoke(argv[1], fpga::WriteOnly(a, n),
+                               fpga::WriteOnly(b, n), fpga::ReadOnly(c, n), n);
   clog << "Load throughput: " << instance.LoadThroughputGbps() << " GB/s\n";
   clog << "Compute latency: " << instance.ComputeTimeSeconds() << " s" << endl;
   clog << "Store throughput: " << instance.StoreThroughputGbps() << " GB/s\n";

@@ -112,13 +112,13 @@ class Instance {
   template <typename T>
   void AllocateBuffers(int index, const T& arg) {}
   template <typename T>
-  void AllocateBuffers(int index, const RoBuf<T>& arg) {
+  void AllocateBuffers(int index, const WoBuf<T>& arg) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
     cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     load_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, const WoBuf<T>& arg) {
+  void AllocateBuffers(int index, const RoBuf<T>& arg) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY;
     cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     load_buffers_.push_back(buffer);
