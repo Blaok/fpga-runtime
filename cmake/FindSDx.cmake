@@ -46,7 +46,7 @@ function(add_xocc_compile_target
                              --temp_dir ${temp_dir}
                              --xp prop:kernel.${kernel}.kernel_flags=-std=c++11
                                   ${debug_flags} ${input_file}
-                     DEPENDS ${input}
+                     DEPENDS ${input} ${input_file}
                      WORKING_DIRECTORY ${cwd}
                      VERBATIM)
 
@@ -106,7 +106,7 @@ function(add_xocc_link_target
                                                 ${dram_mapping_cflags}
                                                 ${debug_flags}
                                                 ${input_file}
-                     DEPENDS ${input}
+                     DEPENDS ${input} ${input_file}
                      WORKING_DIRECTORY ${cwd}
                      VERBATIM)
 
