@@ -4,7 +4,12 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+
+#ifndef NDEBUG
+#include <iostream>
+#endif
 
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
 #define CL_HPP_TARGET_OPENCL_VERSION 120
@@ -22,6 +27,9 @@ inline void ClCheck(cl_int err, const char* file, int line) {
                              ": " + ToString(err));
   }
 }
+#define FUNC_INFO(index)                                  \
+  std::clog << "DEBUG: Function ‘" << __PRETTY_FUNCTION__ \
+            << "’ called with index = " << (index) << std::endl;
 
 template <typename T>
 class Buffer {
@@ -80,29 +88,41 @@ class Instance {
 
   // SetArg
   template <typename T>
-  void SetArg(int index, const T& arg) {
+  void SetArg(int index, T&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     kernel_.setArg(index, arg);
   }
   template <typename T>
-  void SetArg(int index, const RoBuf<T>& arg) {
+  void SetArg(int index, RoBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     kernel_.setArg(index, buffer_table_[index]);
   }
   template <typename T>
-  void SetArg(int index, const WoBuf<T>& arg) {
+  void SetArg(int index, WoBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     kernel_.setArg(index, buffer_table_[index]);
   }
   template <typename T>
-  void SetArg(int index, const RwBuf<T>& arg) {
+  void SetArg(int index, RwBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     kernel_.setArg(index, buffer_table_[index]);
   }
   template <typename T, typename... Args>
-  void SetArg(int index, const T& arg, const Args&... other_args) {
-    SetArg(index, arg);
-    SetArg(index + 1, other_args...);
+  void SetArg(int index, T&& arg, Args&&... other_args) {
+    SetArg(index, std::forward<T>(arg));
+    SetArg(index + 1, std::forward<Args>(other_args)...);
   }
   template <typename... Args>
-  void SetArg(const Args&... args) {
-    SetArg(0, args...);
+  void SetArg(Args&&... args) {
+    SetArg(0, std::forward<Args>(args)...);
   }
 
   cl::Buffer CreateBuffer(int index, cl_mem_flags flags, size_t size,
@@ -110,34 +130,47 @@ class Instance {
 
   // AllocateBuffers
   template <typename T>
-  void AllocateBuffers(int index, const T& arg) {}
+  void AllocateBuffers(int index, T&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
+  }
   template <typename T>
-  void AllocateBuffers(int index, const WoBuf<T>& arg) {
+  void AllocateBuffers(int index, WoBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
     cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     load_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, const RoBuf<T>& arg) {
+  void AllocateBuffers(int index, RoBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY;
     cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     load_buffers_.push_back(buffer);
     store_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, const RwBuf<T>& arg) {
+  void AllocateBuffers(int index, RwBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
     cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     store_buffers_.push_back(buffer);
   }
   template <typename T, typename... Args>
-  void AllocateBuffers(int index, const T& arg, const Args&... other_args) {
-    AllocateBuffers(index, arg);
-    AllocateBuffers(index + 1, other_args...);
+  void AllocateBuffers(int index, T&& arg, Args&&... other_args) {
+    AllocateBuffers(index, std::forward<T>(arg));
+    AllocateBuffers(index + 1, std::forward<Args>(other_args)...);
   }
   template <typename... Args>
-  void AllocateBuffers(const Args&... args) {
-    AllocateBuffers(0, args...);
+  void AllocateBuffers(Args&&... args) {
+    AllocateBuffers(0, std::forward<Args>(args)...);
   }
 
   void WriteToDevice();
@@ -164,15 +197,16 @@ class Instance {
 template <typename... Args>
 Instance Invoke(const std::string& bitstream, Args&&... args) {
   auto instance = Instance(bitstream);
-  instance.AllocateBuffers(args...);
+  instance.AllocateBuffers(std::forward<Args>(args)...);
   instance.WriteToDevice();
-  instance.SetArg(args...);
+  instance.SetArg(std::forward<Args>(args)...);
   instance.Exec();
   instance.ReadFromDevice();
   instance.Finish();
   return instance;
 }
 
+#undef FUNC_INFO
 #ifndef KEEP_CL_CHECK
 #undef CL_CHECK
 #endif  // KEEP_CL_CHECK
