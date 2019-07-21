@@ -172,6 +172,7 @@ Instance::Instance(const string& bitstream) {
         clog << "INFO: Found device: " << device_name << endl;
         if (device_name == target_device_name) {
           clog << "INFO: Using " << device_name << endl;
+          device_ = device;
           context_ = cl::Context(device, nullptr, nullptr, nullptr, &err);
           if (err == CL_DEVICE_NOT_AVAILABLE) {
             continue;
@@ -227,16 +228,20 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
 }
 
 void Instance::WriteToDevice() {
-  load_event_.resize(1);
-  CL_CHECK(cmd_.enqueueMigrateMemObjects(load_buffers_, /* flags = */ 0,
-                                         nullptr, load_event_.data()));
+  if (!load_buffers_.empty()) {
+    load_event_.resize(1);
+    CL_CHECK(cmd_.enqueueMigrateMemObjects(load_buffers_, /* flags = */ 0,
+                                           nullptr, load_event_.data()));
+  }
 }
 
 void Instance::ReadFromDevice() {
-  store_event_.resize(1);
-  CL_CHECK(cmd_.enqueueMigrateMemObjects(store_buffers_,
-                                         CL_MIGRATE_MEM_OBJECT_HOST,
-                                         &compute_event_, store_event_.data()));
+  if (!store_buffers_.empty()) {
+    store_event_.resize(1);
+    CL_CHECK(cmd_.enqueueMigrateMemObjects(
+        store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
+        store_event_.data()));
+  }
 }
 
 void Instance::Exec() {
@@ -260,14 +265,23 @@ cl_ulong ProfilingInfo(const cl::Event& event) {
 }
 template <cl_profiling_info name>
 cl_ulong Instance::LoadProfilingInfo() {
+  if (load_event_.empty()) {
+    return 0ULL;
+  }
   return ProfilingInfo<name>(load_event_[0]);
 }
 template <cl_profiling_info name>
 cl_ulong Instance::ComputeProfilingInfo() {
+  if (compute_event_.empty()) {
+    return 0ULL;
+  }
   return ProfilingInfo<name>(compute_event_[0]);
 }
 template <cl_profiling_info name>
 cl_ulong Instance::StoreProfilingInfo() {
+  if (store_event_.empty()) {
+    return 0ULL;
+  }
   return ProfilingInfo<name>(store_event_[0]);
 }
 cl_ulong Instance::LoadTimeNanoSeconds() {

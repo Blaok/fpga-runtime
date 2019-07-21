@@ -1,8 +1,10 @@
 #ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -70,7 +72,90 @@ RwBuf<T> ReadWrite(T* ptr, size_t n) {
   return RwBuf<T>(ptr, n);
 }
 
+class Stream {
+ protected:
+  const std::string name_;
+  cl_stream stream_ = nullptr;
+
+  Stream(const std::string& name) : name_(name) {}
+  Stream(const Stream&) = delete;
+  ~Stream() {
+    if (stream_ != nullptr) {
+      CL_CHECK(clReleaseStream(stream_));
+    }
+  }
+
+  void Attach(const cl::Device& device, const cl::Kernel& kernel, int index,
+              cl_stream_flags flags) {
+#ifndef NDEBUG
+    std::clog << "DEBUG: Stream ‘" << name_ << "’ attached to argument #"
+              << index << std::endl;
+#endif
+    cl_mem_ext_ptr_t ext;
+    ext.flags = index;
+    ext.param = kernel.get();
+    ext.obj = nullptr;
+    cl_int err;
+    stream_ = clCreateStream(device.get(), flags, CL_STREAM, &ext, &err);
+    CL_CHECK(err);
+  }
+};
+
+class ReadStream : public Stream {
+ public:
+  using Stream::Attach;
+  ReadStream(const std::string& name) : Stream(name) {}
+  ReadStream(const ReadStream&) = delete;
+
+  void Attach(const cl::Device& device, const cl::Kernel& kernel, int index) {
+    Attach(device, kernel, index, CL_STREAM_READ_ONLY);
+  }
+
+  template <typename T>
+  void Read(T* host_ptr, uint64_t size, bool eos = true) {
+    if (stream_ == nullptr) {
+      throw std::runtime_error("cannot read from null stream");
+    }
+    cl_stream_xfer_req req{0};
+    if (eos) {
+      req.flags = CL_STREAM_EOT;
+    }
+    req.priv_data = const_cast<char*>(name_.c_str());
+    cl_int err;
+    clReadStream(stream_, host_ptr, size * sizeof(T), &req, &err);
+    CL_CHECK(err);
+  }
+};
+
+class WriteStream : public Stream {
+ public:
+  using Stream::Attach;
+  WriteStream(const std::string& name) : Stream(name) {}
+  WriteStream(const WriteStream&) = delete;
+
+  void Attach(cl::Device device, cl::Kernel kernel, int index) {
+    Attach(device, kernel, index, CL_STREAM_WRITE_ONLY);
+  }
+
+  template <typename T>
+  void Write(const T* host_ptr, uint64_t size, bool eos = true) {
+    if (stream_ == nullptr) {
+      throw std::runtime_error("cannot write to null stream");
+    }
+    cl_stream_xfer_req req{0};
+    if (eos) {
+      req.flags = CL_STREAM_EOT;
+    }
+    req.priv_data = const_cast<char*>(name_.c_str());
+    cl_int err;
+    clWriteStream(stream_, const_cast<T*>(host_ptr), size * sizeof(T), &req,
+                  &err);
+    CL_CHECK(err);
+  }
+};
+
 class Instance {
+  cl::Device device_;
   cl::Context context_;
   cl::CommandQueue cmd_;
   cl::Program program_;
@@ -114,6 +199,16 @@ class Instance {
     FUNC_INFO(index)
 #endif
     kernel_.setArg(index, buffer_table_[index]);
+  }
+  void SetArg(int index, WriteStream& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
+  }
+  void SetArg(int index, ReadStream& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
   }
   template <typename T, typename... Args>
   void SetArg(int index, T&& arg, Args&&... other_args) {
@@ -163,6 +258,19 @@ class Instance {
     cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
     store_buffers_.push_back(buffer);
   }
+  void AllocateBuffers(int index, WriteStream& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
+    arg.Attach(device_, kernel_, index);
+  }
+  void AllocateBuffers(int index, ReadStream& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
+    arg.Attach(device_, kernel_, index);
+  }
+
   template <typename T, typename... Args>
   void AllocateBuffers(int index, T&& arg, Args&&... other_args) {
     AllocateBuffers(index, std::forward<T>(arg));
@@ -202,7 +310,18 @@ Instance Invoke(const std::string& bitstream, Args&&... args) {
   instance.SetArg(std::forward<Args>(args)...);
   instance.Exec();
   instance.ReadFromDevice();
-  instance.Finish();
+  bool has_stream = false;
+  bool dummy[sizeof...(Args)]{
+      (has_stream |=
+       std::is_base_of<Stream,
+                       typename std::remove_reference<Args>::type>::value)...};
+  if (!has_stream) {
+#ifndef NDEBUG
+    std::clog << "DEBUG: no stream found; waiting for command to finish"
+              << std::endl;
+#endif
+    instance.Finish();
+  }
   return instance;
 }
 
