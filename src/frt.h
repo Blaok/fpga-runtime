@@ -236,7 +236,9 @@ class Instance {
     FUNC_INFO(index)
 #endif
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
-    cl::Buffer buffer = CreateBuffer(index, flags, arg.SizeInBytes(), arg);
+    cl::Buffer buffer = CreateBuffer(
+        index, flags, arg.SizeInBytes(),
+        const_cast<typename std::remove_const<T>::type*>(arg.Get()));
     load_buffers_.push_back(buffer);
   }
   template <typename T>
