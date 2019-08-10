@@ -135,6 +135,8 @@ Instance::Instance(const string& bitstream) {
     if (system(cmd.c_str())) {
       throw std::runtime_error("emconfigutil failed");
     }
+    const char* tmpdir = getenv("TMPDIR");
+    setenv("SDACCEL_EM_RUN_DIR", tmpdir ? tmpdir : "/tmp", 0);
   }
 
   const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE");
