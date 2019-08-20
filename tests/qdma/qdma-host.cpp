@@ -32,17 +32,17 @@ int main(int argc, char* argv[]) {
   const uint64_t kBatchSize = 1ULL << 20;
   auto t1 = std::thread([&]() {
     for (uint64_t i = 0; i < n; i += kBatchSize) {
-      a_stream.Write(a + i, std::min(kBatchSize, n - i), !(i < n - kBatchSize));
+      a_stream.Write(a + i, std::min(kBatchSize, n - i), !(i + kBatchSize < n));
     }
   });
   auto t2 = std::thread([&]() {
     for (uint64_t i = 0; i < n; i += kBatchSize) {
-      b_stream.Write(b + i, std::min(kBatchSize, n - i), !(i < n - kBatchSize));
+      b_stream.Write(b + i, std::min(kBatchSize, n - i), !(i + kBatchSize < n));
     }
   });
   auto t3 = std::thread([&]() {
     for (uint64_t i = 0; i < n; i += kBatchSize) {
-      c_stream.Read(c + i, std::min(kBatchSize, n - i), !(i < n - kBatchSize));
+      c_stream.Read(c + i, std::min(kBatchSize, n - i), !(i + kBatchSize < n));
     }
   });
   t1.join();
