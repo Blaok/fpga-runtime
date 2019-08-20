@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     clog << "Usage: " << argv[0] << " <bitstream> <n>" << endl;
     return 1;
   }
-  uint64_t n = atoi(argv[2]);
+  uint64_t n = (atoi(argv[2]) / 1024 + 1) * 1024;
   auto a = reinterpret_cast<float*>(aligned_alloc(4096, sizeof(float) * n));
   auto b = reinterpret_cast<float*>(aligned_alloc(4096, sizeof(float) * n));
   auto c = reinterpret_cast<float*>(aligned_alloc(4096, sizeof(float) * n));
