@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
   fpga::WriteStream b_stream("b");
   fpga::ReadStream c_stream("c");
   auto instance = fpga::Invoke(argv[1], a_stream, b_stream, c_stream);
-  const uint64_t kBatchSize = 1ULL << 20;
+  const uint64_t kBatchSize = 1ULL << 29;
   auto t1 = std::thread([&]() {
     for (uint64_t i = 0; i < n; i += kBatchSize) {
       a_stream.Write(a + i, std::min(kBatchSize, n - i), !(i + kBatchSize < n));
