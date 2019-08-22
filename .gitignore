@@ -1,4 +1,5 @@
 *.sw?
+.mypy_cache
 .vscode
 build/
 include/

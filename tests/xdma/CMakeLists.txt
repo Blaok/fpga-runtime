@@ -14,32 +14,30 @@ endif()
 set(KERNEL VecAdd)
 
 add_xocc_targets(${CMAKE_CURRENT_BINARY_DIR}
-                 ${KERNEL}
-                 ${XRT_PLATFORM}
-                 xdma-kernel.cpp
-                 "gmem0:DDR[0];gmem1:DDR[1];gmem2:DDR[2]")
+                 PREFIX xdma
+                 KERNEL ${KERNEL}
+                 PLATFORM ${XRT_PLATFORM}
+                 INPUT xdma-kernel.cpp
+                 DRAM_MAPPING gmem0:DDR[0] gmem1:DDR[1] gmem2:DDR[2]
+                 SW_EMU_XCLBIN sw_emu_xclbin
+                 HW_EMU_XCLBIN hw_emu_xclbin
+                 HW_XCLBIN hw_xclbin)
 
-add_custom_target(
-  xdma-csim
-  COMMAND xdma-vadd
-          $<TARGET_PROPERTY:sw_emu_xclbin.${KERNEL}.${XRT_PLATFORM},FILE_NAME>
-          1000000
-  DEPENDS xdma-vadd sw_emu_xclbin.${KERNEL}.${XRT_PLATFORM}
-  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
-add_custom_target(
-  xdma-cosim
-  COMMAND xdma-vadd
-          $<TARGET_PROPERTY:hw_emu_xclbin.${KERNEL}.${XRT_PLATFORM},FILE_NAME>
-          1000
-  DEPENDS xdma-vadd hw_emu_xclbin.${KERNEL}.${XRT_PLATFORM}
-  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
-add_custom_target(
-  xdma-hw
-  COMMAND xdma-vadd
-          $<TARGET_PROPERTY:hw_xclbin.${KERNEL}.${XRT_PLATFORM},FILE_NAME>
-          10000000
-  DEPENDS xdma-vadd hw_xclbin.${KERNEL}.${XRT_PLATFORM}
-  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+add_custom_target(xdma-csim
+                  COMMAND xdma-vadd
+                          $<TARGET_PROPERTY:${sw_emu_xclbin},FILE_NAME> 1000000
+                  DEPENDS xdma-vadd ${sw_emu_xclbin}
+                  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+add_custom_target(xdma-cosim
+                  COMMAND xdma-vadd
+                          $<TARGET_PROPERTY:${hw_emu_xclbin},FILE_NAME> 1000
+                  DEPENDS xdma-vadd ${hw_emu_xclbin}
+                  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
+add_custom_target(xdma-hw
+                  COMMAND xdma-vadd $<TARGET_PROPERTY:${hw_xclbin},FILE_NAME>
+                          10000000
+                  DEPENDS xdma-vadd ${hw_xclbin}
+                  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
 add_custom_target(xdma-emu DEPENDS xdma-csim xdma-cosim)
 
 add_test(NAME xdma-csim
