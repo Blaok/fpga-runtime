@@ -18,7 +18,7 @@ function(add_xocc_compile_target target_name)
   #
   # * KERNEL
   # * PLATFORM
-  # * TARGE
+  # * TARGET
   # * FILE_NAME
   # * DRAM_MAPPING
   #
@@ -35,6 +35,7 @@ function(add_xocc_compile_target target_name)
   #   [--log_dir].
   # * TEMP_DIR: A directory to use for temporary files and directories
   #   [--temp_dir].
+  # * INPUT: Input HLS source target.
   # * SAVE_TEMPS: Boolean, whether to keep intermediate files.
   #
   # Other Arguments:
@@ -128,6 +129,7 @@ function(add_xocc_link_target target_name)
   #   [--log_dir].
   # * TEMP_DIR: A directory to use for temporary files and directories
   #   [--temp_dir].
+  # * INPUT: Input target generated via add_xocc_compile_target.
   # * SAVE_TEMPS: Boolean, whether to keep intermediate files.
   #
   # Other Arguments:
