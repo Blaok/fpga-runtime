@@ -107,7 +107,7 @@ endfunction()
 function(add_xocc_link_target target_name)
   # Generates a `.xclbin` file via `xocc --link`.
   #
-  # The added target will ahve the following properties:
+  # The added target will have the following properties:
   #
   # * KERNEL
   # * PLATFORM
@@ -204,6 +204,112 @@ function(add_xocc_link_target target_name)
                                    DRAM_MAPPING
                                    "${dram_mapping}")
 
+endfunction()
+
+function(add_xocc_hw_link_targets output_dir)
+  # Add cmake targets for hardware simulation and hardware execution.
+  #
+  # Positional Arguments:
+  #
+  # * output_dir: Output directory.
+  #
+  # Required Named Arguments:
+  #
+  # * KERNEL: Kernel name [--kernel].
+  # * PLATFORM: Platform [--platform].
+  # * INPUT: Input filename.
+  #
+  # Optional Named Arguments:
+  #
+  # * PREFIX: Prefix of the generated targets.
+  # * DRAM_MAPPING: A list of mappings from variable name to DDR banks (e.g.
+  #   gmem0:DDR[0]).
+  # * HW_XO: Returns the name of the hw_xo_target.
+  # * HW_EMU_XCLBIN: Returns the name of the hw_emu_xclbin_target.
+  # * HW_XCLBIN: Returns the name of the hw_xclbin_target.
+
+  set(one_value_keywords KERNEL PLATFORM INPUT)
+  list(APPEND one_value_keywords
+              PREFIX
+              HW_XO
+              HW_EMU_XCLBIN
+              HW_XCLBIN)
+  cmake_parse_arguments(XOCC
+                        ""
+                        "${one_value_keywords}"
+                        "DRAM_MAPPING"
+                        ${ARGN})
+  if(XOCC_PREFIX)
+    set(prefix ${XOCC_PREFIX}.)
+  endif()
+  if(TARGET ${XOCC_INPUT})
+    get_target_property(kernel ${XOCC_INPUT} KERNEL)
+    get_target_property(platform ${XOCC_INPUT} PLATFORM)
+    get_target_property(input_file ${XOCC_INPUT} FILE_NAME)
+    get_target_property(dram_mapping ${XOCC_INPUT} DRAM_MAPPING)
+    set(prefix ${prefix}${kernel}.${platform})
+    set(hw_xo_target ${XOCC_INPUT})
+  else()
+    set(kernel ${XOCC_KERNEL})
+    set(platform ${XOCC_PLATFORM})
+    set(input_file ${XOCC_INPUT})
+    set(dram_mapping ${XOCC_DRAM_MAPPING})
+    set(prefix ${prefix}${kernel}.${platform})
+    set(hw_xo_target ${prefix}.hw_xo)
+    add_custom_target(${hw_xo_target} DEPENDS ${input_file})
+    set_target_properties(${hw_xo_target}
+                          PROPERTIES KERNEL
+                                     ${kernel}
+                                     PLATFORM
+                                     ${platform}
+                                     TARGET
+                                     hw
+                                     FILE_NAME
+                                     ${input_file}
+                                     DRAM_MAPPING
+                                     "${dram_mapping}")
+  endif()
+
+  set(hw_emu_xclbin_target ${prefix}.hw_emu_xclbin)
+  set(hw_xclbin_target ${prefix}.hw_xclbin)
+  if(XOCC_HW_XO)
+    set(${XOCC_HW_XO} ${hw_xo_target} PARENT_SCOPE)
+  endif()
+  if(XOCC_HW_EMU_XCLBIN)
+    set(${XOCC_HW_EMU_XCLBIN} ${hw_emu_xclbin_target} PARENT_SCOPE)
+  endif()
+  if(XOCC_HW_XCLBIN)
+    set(${XOCC_HW_XCLBIN} ${hw_xclbin_target} PARENT_SCOPE)
+  endif()
+
+  if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(optimize quick)
+  elseif(CMAKE_BUILD_TYPE MATCHES Release)
+    set(optimize 3)
+  else()
+    set(optimize 0)
+  endif()
+
+  set(hw_emu_xclbin ${prefix}.hw_emu.xclbin)
+  set(hw_xclbin ${prefix}.hw.xclbin)
+  add_xocc_link_target(${hw_emu_xclbin_target}
+                       OUTPUT ${output_dir}/${hw_emu_xclbin}
+                       TARGET hw_emu
+                       OPTIMIZE ${optimize}
+                       REPORT_DIR ${output_dir}/${hw_emu_xclbin}.report
+                       LOG_DIR ${output_dir}/${hw_emu_xclbin}.log
+                       TEMP_DIR ${output_dir}/${hw_emu_xclbin}.temp
+                       INPUT ${hw_xo_target}
+                       SAVE_TEMPS)
+  add_xocc_link_target(${hw_xclbin_target}
+                       OUTPUT ${output_dir}/${hw_xclbin}
+                       TARGET hw
+                       OPTIMIZE ${optimize}
+                       REPORT_DIR ${output_dir}/${hw_xclbin}.report
+                       LOG_DIR ${output_dir}/${hw_xclbin}.log
+                       TEMP_DIR ${output_dir}/${hw_xclbin}.temp
+                       INPUT ${hw_xo_target}
+                       SAVE_TEMPS)
 endfunction()
 
 function(add_xocc_targets output_dir)

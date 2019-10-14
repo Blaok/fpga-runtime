@@ -24,6 +24,20 @@ additional_commands = {
             "INPUT": 1,
         }
     },
+    "add_xocc_hw_link_targets": {
+        "pargs": 1,
+        "flags": [],
+        "kwargs": {
+            "KERNEL": 1,
+            "PLATFORM": 1,
+            "INPUT": 1,
+            "PREFIX": 1,
+            "HW_XO": 1,
+            "HW_EMU_XCLBIN": 1,
+            "HW_XCLBIN": 1,
+            "DRAM_MAPPING": "*",
+        }
+    },
     "add_xocc_targets": {
         "pargs": 1,
         "flags": [],
