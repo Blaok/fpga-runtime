@@ -190,7 +190,7 @@ function(add_xocc_link_target target_name)
   file(MAKE_DIRECTORY ${cwd})
 
   add_custom_command(OUTPUT ${output}
-                     COMMAND ${xocc_cmd}
+                     COMMAND env LC_ALL=C ${xocc_cmd}
                      DEPENDS ${input} ${input_file}
                      WORKING_DIRECTORY ${cwd}
                      VERBATIM)
