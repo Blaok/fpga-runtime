@@ -104,5 +104,6 @@ set(CPACK_GENERATOR TGZ DEB)
 include(CPack)
 
 enable_testing()
+add_subdirectory(tests/hbm)
 add_subdirectory(tests/qdma)
 add_subdirectory(tests/xdma)
