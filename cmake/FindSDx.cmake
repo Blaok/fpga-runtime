@@ -2,7 +2,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-find_program(XOCC xocc PATHS "$ENV{XILINX_SDX}/bin")
+find_program(XOCC NAMES v++ xocc PATHS "$ENV{XILINX_VITIS}/bin" "$ENV{XILINX_SDX}/bin")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SDx
