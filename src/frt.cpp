@@ -206,10 +206,11 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
   cl_mem_ext_ptr_t ext;
   if (arg_table_.count(index)) {
     unordered_map<string, decltype(XCL_MEM_DDR_BANK0)> kTagTable{
-        {"bank0", XCL_MEM_DDR_BANK0},
-        {"bank1", XCL_MEM_DDR_BANK1},
-        {"bank2", XCL_MEM_DDR_BANK2},
-        {"bank3", XCL_MEM_DDR_BANK3}};
+        {"bank0", XCL_MEM_DDR_BANK0},  {"bank1", XCL_MEM_DDR_BANK1},
+        {"bank2", XCL_MEM_DDR_BANK2},  {"bank3", XCL_MEM_DDR_BANK3},
+        {"DDR[0]", XCL_MEM_DDR_BANK0}, {"DDR[1]", XCL_MEM_DDR_BANK1},
+        {"DDR[2]", XCL_MEM_DDR_BANK2}, {"DDR[3]", XCL_MEM_DDR_BANK3},
+    };
     for (int i = 0; i < 32; ++i) {
       kTagTable["HBM[" + std::to_string(i) + "]"] = i | XCL_MEM_TOPOLOGY;
     }
