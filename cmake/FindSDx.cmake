@@ -302,7 +302,8 @@ function(add_xocc_hw_link_targets output_dir)
                        LOG_DIR ${output_dir}/${hw_emu_xclbin}.log
                        TEMP_DIR ${output_dir}/${hw_emu_xclbin}.temp
                        INPUT ${hw_xo_target}
-                       SAVE_TEMPS)
+                       SAVE_TEMPS
+                       ${XOCC_UNPARSED_ARGUMENTS})
   add_xocc_link_target(${hw_xclbin_target}
                        OUTPUT ${output_dir}/${hw_xclbin}
                        TARGET hw
@@ -311,7 +312,8 @@ function(add_xocc_hw_link_targets output_dir)
                        LOG_DIR ${output_dir}/${hw_xclbin}.log
                        TEMP_DIR ${output_dir}/${hw_xclbin}.temp
                        INPUT ${hw_xo_target}
-                       SAVE_TEMPS)
+                       SAVE_TEMPS
+                       ${XOCC_UNPARSED_ARGUMENTS})
 endfunction()
 
 function(add_xocc_targets output_dir)
