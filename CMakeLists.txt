@@ -29,8 +29,9 @@ target_compile_features(frt_static PUBLIC cxx_alias_templates cxx_nullptr
 target_compile_features(frt_shared PUBLIC cxx_alias_templates cxx_nullptr
                         cxx_variadic_templates)
 set_target_properties(
-  frt_static frt_shared PROPERTIES OUTPUT_NAME frt PUBLIC_HEADER
-                                   "src/frt.h;src/opencl-errors.h")
+  frt_static frt_shared
+  PROPERTIES OUTPUT_NAME frt PUBLIC_HEADER "src/frt.h;src/opencl-errors.h"
+             POSITION_INDEPENDENT_CODE ON)
 target_include_directories(
   frt_static PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 target_include_directories(
