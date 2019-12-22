@@ -142,6 +142,20 @@ Instance::Instance(const string& bitstream) {
   const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE");
   if (xcl_emulation_mode != nullptr && string{"sw_emu"} == xcl_emulation_mode) {
     string ld_library_path;
+    if (auto xilinx_sdx = getenv("XILINX_VITIS")) {
+      // find LD_LIBRARY_PATH by sourcing ${XILINX_VITIS}/settings64.sh
+      ld_library_path = internal::Exec(
+          R"(bash -c '. "${XILINX_VITIS}/settings64.sh" && )"
+          R"(printf "${LD_LIBRARY_PATH}"')");
+    } else {
+      // find XILINX_VITIS and LD_LIBRARY_PATH with vivado_hls
+      // ld_library_path is null-separated string of both env vars
+      ld_library_path = internal::Exec(
+          R"(bash -c '. "$(vivado_hls -r -l /dev/null | grep "^/"))"
+          R"(/settings64.sh" && printf "${LD_LIBRARY_PATH}\0${XILINX_VITIS}"')");
+      setenv("XILINX_VITIS",
+             ld_library_path.c_str() + strlen(ld_library_path.c_str()) + 1, 1);
+    }
     if (auto xilinx_sdx = getenv("XILINX_SDX")) {
       // find LD_LIBRARY_PATH by sourcing ${XILINX_SDX}/settings64.sh
       ld_library_path = internal::Exec(
@@ -218,7 +232,7 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
     if (flag != kTagTable.end()) {
       ext.flags = flag->second;
 #ifndef NDEBUG
-      clog << "DEBUG: Argument " << index << " assigned to " 
+      clog << "DEBUG: Argument " << index << " assigned to "
            << arg_table_[index] << endl;
 #endif
     } else {
