@@ -229,6 +229,10 @@ function(add_xocc_hw_link_targets output_dir)
   # * HW_XO: Returns the name of the hw_xo_target.
   # * HW_EMU_XCLBIN: Returns the name of the hw_emu_xclbin_target.
   # * HW_XCLBIN: Returns the name of the hw_xclbin_target.
+  #
+  # Other Arguments:
+  #
+  # * Optional, will be passed to `xocc --link` directly.
 
   set(one_value_keywords KERNEL PLATFORM INPUT)
   list(APPEND one_value_keywords

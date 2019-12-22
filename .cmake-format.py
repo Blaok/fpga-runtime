@@ -1,6 +1,6 @@
 additional_commands = {
     "add_xocc_compile_target": {
-        "pargs": 1,
+        "pargs": '+',
         "flags": ["SAVE_TEMPS",],
         "kwargs": {
             "TARGET": 1,
@@ -12,7 +12,7 @@ additional_commands = {
         }
     },
     "add_xocc_link_target": {
-        "pargs": 1,
+        "pargs": '+',
         "flags": ["SAVE_TEMPS",],
         "kwargs": {
             "TARGET": 1,
@@ -25,7 +25,7 @@ additional_commands = {
         }
     },
     "add_xocc_hw_link_targets": {
-        "pargs": 1,
+        "pargs": '+',
         "flags": [],
         "kwargs": {
             "KERNEL": 1,
