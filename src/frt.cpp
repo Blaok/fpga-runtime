@@ -217,6 +217,10 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
     auto flag = kTagTable.find(arg_table_[index]);
     if (flag != kTagTable.end()) {
       ext.flags = flag->second;
+#ifndef NDEBUG
+      clog << "DEBUG: Argument " << index << " assigned to " 
+           << arg_table_[index] << endl;
+#endif
     } else {
       clog << "WARNING: Unknown argument memory tag: " << arg_table_[index]
            << endl;
