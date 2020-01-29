@@ -1,4 +1,4 @@
-#define KEEP_CL_CHECK
+﻿#define KEEP_CL_CHECK
 #include "frt.h"
 
 #include <cstring>
@@ -79,17 +79,35 @@ Instance::Instance(const string& bitstream) {
         doc.Parse(
             reinterpret_cast<const char*>(axlf_top) + metadata->m_sectionOffset,
             0, TIXML_ENCODING_UTF8);
-        kernel_name = doc.FirstChildElement("project")
-                          ->FirstChildElement("platform")
-                          ->FirstChildElement("device")
-                          ->FirstChildElement("core")
-                          ->FirstChildElement("kernel")
-                          ->Attribute("name");
-        string target_meta = doc.FirstChildElement("project")
-                                 ->FirstChildElement("platform")
-                                 ->FirstChildElement("device")
-                                 ->FirstChildElement("core")
-                                 ->Attribute("target");
+        auto xml_core = doc.FirstChildElement("project")
+                            ->FirstChildElement("platform")
+                            ->FirstChildElement("device")
+                            ->FirstChildElement("core");
+        auto xml_kernel = xml_core->FirstChildElement("kernel");
+        kernel_name = xml_kernel->Attribute("name");
+        string target_meta = xml_core->Attribute("target");
+        for (auto xml_arg = xml_kernel->FirstChildElement("arg");
+             xml_arg != nullptr; xml_arg = xml_arg->NextSiblingElement("arg")) {
+          auto index = atoi(xml_arg->Attribute("id"));
+          auto& arg = arg_table_[index];
+          arg.index = index;
+          arg.name = xml_arg->Attribute("name");
+          arg.type = xml_arg->Attribute("type");
+          auto cat = atoi(xml_arg->Attribute("addressQualifier"));
+          switch (cat) {
+            case 0:
+              arg.cat = ArgInfo::kScalar;
+              break;
+            case 1:
+              arg.cat = ArgInfo::kMmap;
+              break;
+            case 4:
+              arg.cat = ArgInfo::kStream;
+              break;
+            default:
+              clog << "WARNING: Unknown argument category: " << cat;
+          }
+        }
         // m_mode doesn't always work
         if (target_meta == "hw_em") {
           setenv("XCL_EMULATION_MODE", "hw_emu", 0);
@@ -118,7 +136,7 @@ Instance::Instance(const string& bitstream) {
             reinterpret_cast<const char*>(axlf_top) + conn->m_sectionOffset);
         for (int i = 0; i < connect->m_count; ++i) {
           const connection& c = connect->m_connection[i];
-          arg_table_[c.arg_index] = memory_table[c.mem_data_index];
+          arg_table_[c.arg_index].tag = memory_table[c.mem_data_index];
         }
       }
     } else {
@@ -228,15 +246,15 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
     for (int i = 0; i < 32; ++i) {
       kTagTable["HBM[" + std::to_string(i) + "]"] = i | XCL_MEM_TOPOLOGY;
     }
-    auto flag = kTagTable.find(arg_table_[index]);
+    auto flag = kTagTable.find(arg_table_[index].tag);
     if (flag != kTagTable.end()) {
       ext.flags = flag->second;
 #ifndef NDEBUG
       clog << "DEBUG: Argument " << index << " assigned to "
-           << arg_table_[index] << endl;
+           << arg_table_[index].tag << endl;
 #endif
-    } else {
-      clog << "WARNING: Unknown argument memory tag: " << arg_table_[index]
+    } else if (!arg_table_[index].tag.empty()) {
+      clog << "WARNING: Unknown argument memory tag: " << arg_table_[index].tag
            << endl;
     }
     ext.obj = host_ptr;

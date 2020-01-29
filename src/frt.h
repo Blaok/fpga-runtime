@@ -1,17 +1,14 @@
-#ifndef FPGA_RUNTIME_H_
+﻿#ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
 
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#ifndef NDEBUG
-#include <iostream>
-#endif
 
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
 #define CL_HPP_TARGET_OPENCL_VERSION 120
@@ -154,6 +151,39 @@ class WriteStream : public Stream {
   }
 };
 
+struct ArgInfo {
+  enum Cat {
+    kScalar = 0,
+    kMmap = 1,
+    kStream = 2,
+  };
+  int32_t index;
+  std::string name;
+  std::string type;
+  Cat cat;
+  std::string tag;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const ArgInfo::Cat& cat) {
+  switch (cat) {
+    case ArgInfo::kScalar:
+      return os << "scalar";
+    case ArgInfo::kMmap:
+      return os << "mmap";
+    case ArgInfo::kStream:
+      return os << "stream";
+  }
+  return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const ArgInfo& arg) {
+  os << "ArgInfo: {index: " << arg.index << ", name: ‘" << arg.name
+     << "’, type: ‘" << arg.type << "’, category: " << arg.cat;
+  if (!arg.tag.empty()) os << ", tag: ‘" << arg.tag << "’";
+  os << "}";
+  return os;
+}
+
 class Instance {
   cl::Device device_;
   cl::Context context_;
@@ -161,7 +191,7 @@ class Instance {
   cl::Program program_;
   cl::Kernel kernel_;
   std::unordered_map<int, cl::Memory> buffer_table_;
-  std::unordered_map<int32_t, std::string> arg_table_;
+  std::unordered_map<int32_t, ArgInfo> arg_table_;
   std::vector<cl::Memory> load_buffers_;
   std::vector<cl::Memory> store_buffers_;
   std::vector<cl::Event> load_event_;
@@ -170,6 +200,20 @@ class Instance {
 
  public:
   Instance(const std::string& bitstream);
+
+  // Return info of all args as a vector, sorted by the index.
+  std::vector<ArgInfo> GetArgsInfo() {
+    std::vector<ArgInfo> args;
+    args.reserve(arg_table_.size());
+    for (const auto& arg : arg_table_) {
+      args.push_back(arg.second);
+    }
+    std::sort(args.begin(), args.end(),
+              [](const ArgInfo& lhs, const ArgInfo& rhs) {
+                return lhs.index < rhs.index;
+              });
+    return args;
+  }
 
   // SetArg
   template <typename T>
@@ -288,6 +332,28 @@ class Instance {
   void Exec();
   void Finish();
 
+  template <typename... Args>
+  Instance& Invoke(Args&&... args) {
+    AllocateBuffers(std::forward<Args>(args)...);
+    WriteToDevice();
+    SetArg(std::forward<Args>(args)...);
+    Exec();
+    ReadFromDevice();
+    bool has_stream = false;
+    bool dummy[sizeof...(Args)]{(
+        has_stream |=
+        std::is_base_of<Stream,
+                        typename std::remove_reference<Args>::type>::value)...};
+    if (!has_stream) {
+#ifndef NDEBUG
+      std::clog << "DEBUG: no stream found; waiting for command to finish"
+                << std::endl;
+#endif
+      Finish();
+    }
+    return *this;
+  }
+
   template <cl_profiling_info name>
   cl_ulong LoadProfilingInfo();
   template <cl_profiling_info name>
@@ -306,25 +372,7 @@ class Instance {
 
 template <typename... Args>
 Instance Invoke(const std::string& bitstream, Args&&... args) {
-  auto instance = Instance(bitstream);
-  instance.AllocateBuffers(std::forward<Args>(args)...);
-  instance.WriteToDevice();
-  instance.SetArg(std::forward<Args>(args)...);
-  instance.Exec();
-  instance.ReadFromDevice();
-  bool has_stream = false;
-  bool dummy[sizeof...(Args)]{
-      (has_stream |=
-       std::is_base_of<Stream,
-                       typename std::remove_reference<Args>::type>::value)...};
-  if (!has_stream) {
-#ifndef NDEBUG
-    std::clog << "DEBUG: no stream found; waiting for command to finish"
-              << std::endl;
-#endif
-    instance.Finish();
-  }
-  return instance;
+  return Instance(bitstream).Invoke(std::forward<Args>(args)...);
 }
 
 #undef FUNC_INFO
