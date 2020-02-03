@@ -288,26 +288,15 @@ class Instance {
   cl::Buffer CreateBuffer(int index, cl_mem_flags flags, size_t size,
                           void* host_ptr);
 
-  // AllocateBuffers
+  // AllocBuf
   template <typename T>
-  void AllocateBuffers(int index, T&& arg) {
+  void AllocBuf(int index, T&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
   }
   template <typename T>
-  void AllocateBuffers(int index, WoBuf<T>& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
-    cl::Buffer buffer = CreateBuffer(
-        index, flags, arg.SizeInBytes(),
-        const_cast<typename std::remove_const<T>::type*>(arg.Get()));
-    load_buffers_.push_back(buffer);
-  }
-  template <typename T>
-  void AllocateBuffers(int index, WoBuf<T>&& arg) {
+  void AllocBuf(int index, WoBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
@@ -318,7 +307,18 @@ class Instance {
     load_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, RoBuf<T>& arg) {
+  void AllocBuf(int index, WoBuf<T>&& arg) {
+#ifndef NDEBUG
+    FUNC_INFO(index)
+#endif
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
+    cl::Buffer buffer = CreateBuffer(
+        index, flags, arg.SizeInBytes(),
+        const_cast<typename std::remove_const<T>::type*>(arg.Get()));
+    load_buffers_.push_back(buffer);
+  }
+  template <typename T>
+  void AllocBuf(int index, RoBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
@@ -328,7 +328,7 @@ class Instance {
     store_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, RoBuf<T>&& arg) {
+  void AllocBuf(int index, RoBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
@@ -338,7 +338,7 @@ class Instance {
     store_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, RwBuf<T>& arg) {
+  void AllocBuf(int index, RwBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
@@ -349,7 +349,7 @@ class Instance {
     store_buffers_.push_back(buffer);
   }
   template <typename T>
-  void AllocateBuffers(int index, RwBuf<T>&& arg) {
+  void AllocBuf(int index, RwBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
@@ -359,13 +359,13 @@ class Instance {
     load_buffers_.push_back(buffer);
     store_buffers_.push_back(buffer);
   }
-  void AllocateBuffers(int index, WriteStream& arg) {
+  void AllocBuf(int index, WriteStream& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
     arg.Attach(device_, kernel_, index);
   }
-  void AllocateBuffers(int index, ReadStream& arg) {
+  void AllocBuf(int index, ReadStream& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
@@ -373,13 +373,13 @@ class Instance {
   }
 
   template <typename T, typename... Args>
-  void AllocateBuffers(int index, T&& arg, Args&&... other_args) {
-    AllocateBuffers(index, std::forward<T>(arg));
-    AllocateBuffers(index + 1, std::forward<Args>(other_args)...);
+  void AllocBuf(int index, T&& arg, Args&&... other_args) {
+    AllocBuf(index, std::forward<T>(arg));
+    AllocBuf(index + 1, std::forward<Args>(other_args)...);
   }
   template <typename... Args>
-  void AllocateBuffers(Args&&... args) {
-    AllocateBuffers(0, std::forward<Args>(args)...);
+  void AllocBuf(Args&&... args) {
+    AllocBuf(0, std::forward<Args>(args)...);
   }
 
   void WriteToDevice();
@@ -389,7 +389,7 @@ class Instance {
 
   template <typename... Args>
   Instance& Invoke(Args&&... args) {
-    AllocateBuffers(std::forward<Args>(args)...);
+    AllocBuf(std::forward<Args>(args)...);
     WriteToDevice();
     SetArg(std::forward<Args>(args)...);
     Exec();
