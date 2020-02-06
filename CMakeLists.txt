@@ -17,20 +17,23 @@ add_library(frt_static STATIC)
 add_library(frt ALIAS frt_static)
 add_library(frt_shared SHARED)
 target_sources(
-  frt_static PRIVATE src/frt.cpp PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/frt.h>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/opencl-errors.h>)
+  frt_static
+  PRIVATE src/frt.cpp
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/frt.h>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/opencl-errors.h>)
 target_sources(
-  frt_shared PRIVATE src/frt.cpp PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/frt.h>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/opencl-errors.h>)
+  frt_shared
+  PRIVATE src/frt.cpp
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/frt.h>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/opencl-errors.h>)
 target_compile_features(frt_static PUBLIC cxx_alias_templates cxx_nullptr
-                        cxx_variadic_templates)
+                                          cxx_variadic_templates)
 target_compile_features(frt_shared PUBLIC cxx_alias_templates cxx_nullptr
-                        cxx_variadic_templates)
+                                          cxx_variadic_templates)
 set_target_properties(
   frt_static frt_shared
   PROPERTIES OUTPUT_NAME frt PUBLIC_HEADER "src/frt.h;src/opencl-errors.h"
+
              POSITION_INDEPENDENT_CODE ON)
 target_include_directories(
   frt_static PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
