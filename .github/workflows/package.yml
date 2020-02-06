@@ -1,0 +1,42 @@
+name: package
+
+on:
+  push:
+    tags:
+    - '*'
+
+jobs:
+  package:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-16.04, ubuntu-18.04]
+      max-parallel: 1
+
+    steps:
+    - name: Checkout myself
+      uses: actions/checkout@v2
+    - name: Install build dependencies
+      run: |
+        sudo apt-get install -y libtinyxml-dev opencl-headers
+        ./.github/scripts/install-xrt.sh
+    - name: Configure myself
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+      env:
+        XILINX_XRT: /opt/xilinx/xrt
+    - name: Package myself
+      run: cmake --build build --target package
+    - name: Cache APT database
+      uses: actions/cache@v1
+      with:
+        path: apt-db-cache
+        key: ${{ runner.os }}-apt-db-cache
+    - name: Update APT repository
+      run: ./.github/scripts/upload-apt-repo.sh
+      env:
+        BUILD_DIR: build
+        CACHE_DIR: apt-db-cache
+        LABEL: FPGA Runtime Repository
+        GPG_KEY: ${{ secrets.GPG_KEY }}
+        SSH_KEY: ${{ secrets.SSH_KEY }}
