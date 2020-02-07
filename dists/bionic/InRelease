@@ -1,0 +1,50 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: amd64
+Codename: bionic
+Components: main
+Date: Fri, 07 Feb 2020 01:56:39 +0000
+Label: FPGA Runtime Repository
+MD5Sum:
+ cfb180df00e7edc971d0d2a7629f6a0c              124 Release
+ 3801e4f3826fb762e78e4367f44bb7b7              475 main/Contents-amd64
+ 6ad72567aa187d7ee2067d2c66d0e0d0              163 main/Contents-amd64.gz
+ 618f2af51272394f61386971c528d842              774 main/binary-amd64/Packages
+ 8cf39fc7349d61527f403d7d38468782              548 main/binary-amd64/Packages.gz
+ ac3bbbba8d42624ba8da3452a46e3bea              832 main/binary-amd64/Release
+SHA1:
+ 2f74af7a8aa73aebc90bdac67093f6213635758a              124 Release
+ a679f823bb4271152eb1f15de4f040d9326d2833              475 main/Contents-amd64
+ cc728f014ec7182485bd178383034488aad7702b              163 main/Contents-amd64.gz
+ 0914de22de7cb8bad0bc33f9c1e76dd5feb7cd65              774 main/binary-amd64/Packages
+ c0f9c0e6aee2000a84a386ea07e0c07928e66248              548 main/binary-amd64/Packages.gz
+ c648ce9a87e708cea13261ca0fae43dbbbf78e9f              832 main/binary-amd64/Release
+SHA256:
+ 1124dc4ca9f632171ad836880460717ae45e0a3a79c33af6977b699cb25c6459              124 Release
+ aa8b224f0e3740136ffd753015af5ca477a4646920b527493fb8869862eac4f6              475 main/Contents-amd64
+ 4921ef404b38c5f02fb25d53b8ad37d5bbc383dc7c4aba7d32d01a807fa1e17e              163 main/Contents-amd64.gz
+ 58244dc9b80b361d57c727cfab942701ea7015c9d81d7a8ebab30328393f8b2e              774 main/binary-amd64/Packages
+ 78d3b0ae1918a82a07114fd8259c32c6a8f9ba0b7f6a547a2b129fde8806bec2              548 main/binary-amd64/Packages.gz
+ 41391665516462fb535a3de12b0f2d971260cff04faa3660f8cc5ed086392277              832 main/binary-amd64/Release
+SHA512:
+ 62724971839ecb6f6f120880175b3668c5a8d913af329be9770f7c97b2d5128a11fc2696d4af92823c581045482e541e8e788d5489d4019173b340c6f7b1eea5              124 Release
+ 2b98ad78b6a0ec1efb422374222597852af34d4748974febe6042e169fda239947230ff9ec28a510e98568272191259fb66e8a682fae7227f7b34f55122fbdfb              475 main/Contents-amd64
+ 23280802791f5c18b826eb2f22ac1b52e95136a1a9beb36a55f9f8e7d7cb3bd075dc0be5c63bd717036680e48d05a7f0950754ce5dcac587c85514c6119954d2              163 main/Contents-amd64.gz
+ c0d350644bcc54021862104ab680bbe7e1d3d15e6a516a3dda89978f323c9b0ae66487ec6ffb43728a832ee196af15c17f23b09d3be1fa4e56f09c4719e20330              774 main/binary-amd64/Packages
+ 07215051acbc0412fbdf3a540cc7a016e211dbaa586e3e0bf11bc8fc85426903c82e1bd9bee351a9236e777ee022640fdb690f2d20da3fa4a825b26e43c35cc3              548 main/binary-amd64/Packages.gz
+ 11a5346720e30cd5d15615257980a65c4c3c42ae8905a46b94d3e4bc756143951f661752be14a361d0876578b460e5009161819e12f7dac744955fe90938cdd8              832 main/binary-amd64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQGzBAEBCgAdFiEEIPkzQePUbMYnN8h0o9uLJGNrM+4FAl48w9cACgkQo9uLJGNr
+M+7BfgwAhQocRWjsrEpZnlqmMQpC15YGiyE1a4Rb7emBkq3+aB1zzdqR7RQbjcA9
+o5tGmFucNSJWz8tPo534K7qAAYDyq52t3eikQ7XQKolyPg5IKkQVEGfojeJ8Flyw
+PGtnMe9mm7Vt0ZxSC9UYOLYeAsP8HL86f/5Zcz5FsVFhEmwbI0mU7Yrp4OQrWp5H
+UW35CqxwetNp0zKvJrxxKnF8Yi4oWz5cVZulZ21YctET5mXh24abJjJkJ76Zh1cF
+DYyVCmMvTsfLGProeN+O7+TmrPFmzluzjHUQlDAcqDtGbxYom+qW8fic12Kt5p4/
+gDVlYeuy3m6eeh1QeHtMDV+JiOcOvSHn1qm+Av9I7vi/wbOHVFFzmCbOm7SDBYjv
+rYEhYMT0i6MNX85uzh6/bRejZIf0Ut6Dm27lAmKJqWO8ez3KWhEdQuDmgb8pPypP
+NW+pxBRzdxjyvVcOtiMsHPoTowBYvLmdzybXikfJHuEvw1qgDki3xWbi5qaFmgWt
+LsSgrsok
+=+heo
+-----END PGP SIGNATURE-----

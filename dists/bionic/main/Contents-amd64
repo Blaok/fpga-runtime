@@ -1,0 +1,10 @@
+usr/include/frt.h					    libfrt-dev
+usr/include/opencl-errors.h				    libfrt-dev
+usr/lib/cmake/frt/FRTConfig.cmake			    libfrt-dev
+usr/lib/cmake/frt/FRTTargets-release.cmake		    libfrt-dev
+usr/lib/cmake/frt/FRTTargets.cmake			    libfrt-dev
+usr/lib/cmake/frt/SDxConfig.cmake			    libfrt-dev
+usr/lib/cmake/frt/TinyXMLConfig.cmake			    libfrt-dev
+usr/lib/cmake/frt/XRTConfig.cmake			    libfrt-dev
+usr/lib/libfrt.a					    libfrt-dev
+usr/lib/libfrt.so					    libfrt-dev

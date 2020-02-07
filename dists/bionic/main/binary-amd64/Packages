@@ -1,0 +1,23 @@
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20200206.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 279
+Depends: jq, libtinyxml-dev, opencl-headers, xrt
+Recommends: csh
+Filename: pool/main/bionic/libfrt-dev_0.0.20200206.1_amd64.deb
+Size: 75360
+MD5sum: 33cb6d141f4c4f1c2d3c59fbd21115ca
+SHA1: 191ca2056d7307c5d14b20e338f0990c84edace5
+SHA256: ac8f2100e44bd1af4b6298a3ac83b090e82fdc1e274dd31ea79bf8e47e187dea
+SHA512: cc2daa7548a4bca0838e60b965006a24df13d2f2d46a7317942751e635a6e8086fce72da70b0fe01929df47b781ce23861f55968bf32c66529269c098583f17e
+Description: FPGA Runtime for PCIe-Based FPGAs
+ DESCRIPTION
+ ===========
+ .
+ This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
+ .
+ .
+
