@@ -8,11 +8,11 @@ Installed-Size: 279
 Depends: jq, libtinyxml-dev, opencl-headers, xrt
 Recommends: csh
 Filename: pool/main/bionic/libfrt-dev_0.0.20200206.1_amd64.deb
-Size: 75360
-MD5sum: 5fc87347ef554b7edf848530d1cecb47
-SHA1: 358c838eb10d270215c3ac6c1b7933be0bef6435
-SHA256: f20db6ca30e05a32338d693bab509f6d0824666ed03097e334af8e2b503b4cf2
-SHA512: cd364a5814fb655a1cee6904e0fb1fb20784b92c88ddff20f43fda0914f3881b246980bf8bc910cbdf8fe6294dc9b0586c97761c93101c8212e30e5effef0410
+Size: 75352
+MD5sum: c50d95f5e9156778999552c825cf052c
+SHA1: c43b1d8e71f78c39681fb15bf902e527635f116c
+SHA256: a0b29fc1bb32b73a36b1118da9c23e00dc3d8f3815edce5d1a171ab6d21aaa1d
+SHA512: cdb9b1f575463aa5c967d37615e98424ed8b809f331f093b0f9a7f077fd067bf0013efb67c7e3ae8626f3269d5ad4a95ab38182d3e387174de5cedb9a8694b57
 Description: FPGA Runtime for PCIe-Based FPGAs
  DESCRIPTION
  ===========
