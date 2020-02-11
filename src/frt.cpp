@@ -247,6 +247,7 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
     for (int i = 0; i < 32; ++i) {
       kTagTable["HBM[" + std::to_string(i) + "]"] = i | XCL_MEM_TOPOLOGY;
     }
+    ext.flags = 0;
     auto flag = kTagTable.find(arg_table_[index].tag);
     if (flag != kTagTable.end()) {
       ext.flags = flag->second;
