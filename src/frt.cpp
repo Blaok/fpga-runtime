@@ -17,7 +17,6 @@
 
 using std::clog;
 using std::endl;
-using std::make_shared;
 using std::runtime_error;
 using std::string;
 using std::unique_ptr;
@@ -236,8 +235,8 @@ Instance::Instance(const string& bitstream) {
 
 cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
                                   void* host_ptr) {
+  cl_mem_ext_ptr_t ext;
   if (arg_table_.count(index)) {
-    decltype(cl_mem_ext_ptrs_)::value_type::element_type ext;
     unordered_map<string, decltype(XCL_MEM_DDR_BANK0)> kTagTable{
         {"bank0", XCL_MEM_DDR_BANK0},  {"bank1", XCL_MEM_DDR_BANK1},
         {"bank2", XCL_MEM_DDR_BANK2},  {"bank3", XCL_MEM_DDR_BANK3},
@@ -262,8 +261,7 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
     ext.obj = host_ptr;
     ext.param = nullptr;
     flags |= CL_MEM_EXT_PTR_XILINX;
-    cl_mem_ext_ptrs_.push_back(make_shared<decltype(ext)>(ext));
-    host_ptr = cl_mem_ext_ptrs_.rbegin()->get();
+    host_ptr = &ext;
   }
   cl_int err;
   auto buffer = cl::Buffer(context_, flags, size, host_ptr, &err);

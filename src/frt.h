@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <memory>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -193,7 +192,6 @@ class Instance {
   cl::Kernel kernel_;
   std::unordered_map<int, cl::Memory> buffer_table_;
   std::unordered_map<int32_t, ArgInfo> arg_table_;
-  std::vector<std::shared_ptr<cl_mem_ext_ptr_t>> cl_mem_ext_ptrs_;
   std::vector<cl::Memory> load_buffers_;
   std::vector<cl::Memory> store_buffers_;
   std::vector<cl::Event> load_event_;
