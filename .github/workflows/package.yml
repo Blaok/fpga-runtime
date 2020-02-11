@@ -23,8 +23,6 @@ jobs:
         ./.github/scripts/install-xrt.sh
     - name: Configure myself
       run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
-      env:
-        XILINX_XRT: /opt/xilinx/xrt
     - name: Package myself
       run: cmake --build build --target package
     - name: Cache APT database
