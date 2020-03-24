@@ -1,4 +1,4 @@
-﻿#define KEEP_CL_CHECK
+#define KEEP_CL_CHECK
 #include "frt.h"
 
 #include <cstring>
@@ -289,7 +289,7 @@ void Instance::ReadFromDevice() {
 
 void Instance::Exec() {
   compute_event_.resize(1);
-  CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NDRange(1), cl::NDRange(1),
+  CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NullRange, cl::NDRange(1),
                                      cl::NDRange(1), &load_event_,
                                      compute_event_.data()));
 }
