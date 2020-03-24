@@ -1,4 +1,4 @@
-﻿#ifndef FPGA_RUNTIME_H_
+#ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
 
 #include <algorithm>
@@ -390,8 +390,8 @@ class Instance {
   template <typename... Args>
   Instance& Invoke(Args&&... args) {
     AllocBuf(std::forward<Args>(args)...);
-    WriteToDevice();
     SetArg(std::forward<Args>(args)...);
+    WriteToDevice();
     Exec();
     ReadFromDevice();
     bool has_stream = false;
