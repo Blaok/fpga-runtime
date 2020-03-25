@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -13,6 +14,7 @@
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
+#include <CL/cl_ext_xilinx.h>
 #include <CL/cl2.hpp>
 
 #include "opencl-errors.h"
@@ -195,7 +197,8 @@ class Instance {
   cl::Context context_;
   cl::CommandQueue cmd_;
   cl::Program program_;
-  cl::Kernel kernel_;
+  // Maps prefix sum of arg count to kernels.
+  std::map<int, cl::Kernel> kernels_;
   std::unordered_map<int, cl::Buffer> buffer_table_;
   std::unordered_map<int, void*> host_ptr_table_;
   std::unordered_map<int32_t, ArgInfo> arg_table_;
@@ -208,6 +211,15 @@ class Instance {
 
   std::vector<cl::Memory> GetLoadBuffers();
   std::vector<cl::Memory> GetStoreBuffers();
+  std::pair<int, cl::Kernel> GetKernel(int index) {
+    auto it = --this->kernels_.upper_bound(index);
+    return {index - it->first, it->second};
+  }
+  template <typename T>
+  void SetArgInternal(int index, T arg) {
+    auto pair = this->GetKernel(index);
+    pair.second.setArg(pair.first, arg);
+  }
 
  public:
   Instance(const std::string& bitstream);
@@ -232,49 +244,49 @@ class Instance {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, arg);
+    this->SetArgInternal(index, arg);
   }
   template <typename T>
   void SetArg(int index, RoBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, buffer_table_[index]);
+    this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
   void SetArg(int index, RoBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, buffer_table_[index]);
+    this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
   void SetArg(int index, WoBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, buffer_table_[index]);
+    this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
   void SetArg(int index, WoBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, buffer_table_[index]);
+    this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
   void SetArg(int index, RwBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, buffer_table_[index]);
+    this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
   void SetArg(int index, RwBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    kernel_.setArg(index, buffer_table_[index]);
+    this->SetArgInternal(index, buffer_table_[index]);
   }
   void SetArg(int index, WriteStream& arg) {
 #ifndef NDEBUG
@@ -368,13 +380,15 @@ class Instance {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    arg.Attach(device_, kernel_, index);
+    auto pair = this->GetKernel(index);
+    arg.Attach(device_, pair.second, pair.first);
   }
   void AllocBuf(int index, ReadStream& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    arg.Attach(device_, kernel_, index);
+    auto pair = this->GetKernel(index);
+    arg.Attach(device_, pair.second, pair.first);
   }
 
   template <typename T, typename... Args>

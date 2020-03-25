@@ -72,7 +72,19 @@ Instance::Instance(const string& bitstream) {
   cl::Program::Binaries binaries = LoadBinaryFile(bitstream);
   string target_device_name;
   string vendor_name;
-  string kernel_name;
+  vector<string> kernel_names;
+  vector<int> kernel_arg_counts;
+  int arg_count = 0;
+  auto add_kernel_name = [&](const string& name) {
+    kernel_names.push_back(name);
+    kernel_arg_counts.push_back(arg_count);
+  };
+  auto add_arg = [&]() -> ArgInfo& {
+    auto& arg = this->arg_table_[arg_count];
+    arg.index = arg_count;
+    ++arg_count;
+    return arg;
+  };
   for (const auto& binary : binaries) {
     if (binary.size() >= 8 && memcmp(binary.data(), "xclbin2", 8) == 0) {
       this->vendor_ = Vendor::kXilinx;
@@ -105,29 +117,31 @@ Instance::Instance(const string& bitstream) {
                             ->FirstChildElement("platform")
                             ->FirstChildElement("device")
                             ->FirstChildElement("core");
-        auto xml_kernel = xml_core->FirstChildElement("kernel");
-        kernel_name = xml_kernel->Attribute("name");
         string target_meta = xml_core->Attribute("target");
-        for (auto xml_arg = xml_kernel->FirstChildElement("arg");
-             xml_arg != nullptr; xml_arg = xml_arg->NextSiblingElement("arg")) {
-          auto index = atoi(xml_arg->Attribute("id"));
-          auto& arg = arg_table_[index];
-          arg.index = index;
-          arg.name = xml_arg->Attribute("name");
-          arg.type = xml_arg->Attribute("type");
-          auto cat = atoi(xml_arg->Attribute("addressQualifier"));
-          switch (cat) {
-            case 0:
-              arg.cat = ArgInfo::kScalar;
-              break;
-            case 1:
-              arg.cat = ArgInfo::kMmap;
-              break;
-            case 4:
-              arg.cat = ArgInfo::kStream;
-              break;
-            default:
-              clog << "WARNING: Unknown argument category: " << cat;
+        for (auto xml_kernel = xml_core->FirstChildElement("kernel");
+             xml_kernel != nullptr;
+             xml_kernel = xml_kernel->NextSiblingElement("kernel")) {
+          add_kernel_name(xml_kernel->Attribute("name"));
+          for (auto xml_arg = xml_kernel->FirstChildElement("arg");
+               xml_arg != nullptr;
+               xml_arg = xml_arg->NextSiblingElement("arg")) {
+            auto& arg = add_arg();
+            arg.name = xml_arg->Attribute("name");
+            arg.type = xml_arg->Attribute("type");
+            auto cat = atoi(xml_arg->Attribute("addressQualifier"));
+            switch (cat) {
+              case 0:
+                arg.cat = ArgInfo::kScalar;
+                break;
+              case 1:
+                arg.cat = ArgInfo::kMmap;
+                break;
+              case 4:
+                arg.cat = ArgInfo::kStream;
+                break;
+              default:
+                clog << "WARNING: Unknown argument category: " << cat;
+            }
           }
         }
         // m_mode doesn't always work
@@ -188,27 +202,29 @@ Instance::Instance(const string& bitstream) {
             doc.Parse(reinterpret_cast<const char*>(elf_header) +
                           section_header->sh_offset,
                       0, TIXML_ENCODING_UTF8);
-            auto xml_kernel =
-                doc.FirstChildElement("board")->FirstChildElement("kernel");
-            kernel_name = xml_kernel->Attribute("name");
-            for (auto xml_arg = xml_kernel->FirstChildElement("argument");
-                 xml_arg != nullptr;
-                 xml_arg = xml_arg->NextSiblingElement("argument")) {
-              auto index = atoi(xml_arg->Attribute("index"));
-              auto& arg = this->arg_table_[index];
-              arg.index = index;
-              arg.name = xml_arg->Attribute("name");
-              arg.type = xml_arg->Attribute("type_name");
-              auto cat = atoi(xml_arg->Attribute("opencl_access_type"));
-              switch (cat) {
-                case 0:
-                  arg.cat = ArgInfo::kScalar;
-                  break;
-                case 2:
-                  arg.cat = ArgInfo::kMmap;
-                  break;
-                default:
-                  clog << "WARNING: Unknown argument category: " << cat;
+            for (auto xml_kernel =
+                     doc.FirstChildElement("board")->FirstChildElement(
+                         "kernel");
+                 xml_kernel != nullptr;
+                 xml_kernel = xml_kernel->NextSiblingElement("kernel")) {
+              add_kernel_name(xml_kernel->Attribute("name"));
+              for (auto xml_arg = xml_kernel->FirstChildElement("argument");
+                   xml_arg != nullptr;
+                   xml_arg = xml_arg->NextSiblingElement("argument")) {
+                auto& arg = add_arg();
+                arg.name = xml_arg->Attribute("name");
+                arg.type = xml_arg->Attribute("type_name");
+                auto cat = atoi(xml_arg->Attribute("opencl_access_type"));
+                switch (cat) {
+                  case 0:
+                    arg.cat = ArgInfo::kScalar;
+                    break;
+                  case 2:
+                    arg.cat = ArgInfo::kMmap;
+                    break;
+                  default:
+                    clog << "WARNING: Unknown argument category: " << cat;
+                }
               }
             }
           } else if (strcmp(section_name, ".acl.board") == 0) {
@@ -224,7 +240,7 @@ Instance::Instance(const string& bitstream) {
             target_device_name = board_name;
           }
         }
-        if (kernel_name.empty() || target_device_name.empty()) {
+        if (kernel_names.empty() || target_device_name.empty()) {
           throw runtime_error("unexpected ELF file");
         }
       } else if (binary.data()[EI_CLASS] == ELFCLASS64) {
@@ -336,8 +352,11 @@ Instance::Instance(const string& bitstream) {
             CL_CHECK(status);
           }
           CL_CHECK(err);
-          kernel_ = cl::Kernel(program_, kernel_name.c_str(), &err);
-          CL_CHECK(err);
+          for (int i = 0; i < kernel_names.size(); ++i) {
+            this->kernels_[kernel_arg_counts[i]] =
+                cl::Kernel(program_, kernel_names[i].c_str(), &err);
+            CL_CHECK(err);
+          }
           return;
         }
       }
@@ -456,10 +475,14 @@ void Instance::ReadFromDevice() {
 }
 
 void Instance::Exec() {
-  compute_event_.resize(1);
-  CL_CHECK(cmd_.enqueueNDRangeKernel(kernel_, cl::NullRange, cl::NDRange(1),
-                                     cl::NDRange(1), &load_event_,
-                                     compute_event_.data()));
+  compute_event_.resize(this->kernels_.size());
+  int i = 0;
+  for (auto& pair : this->kernels_) {
+    CL_CHECK(cmd_.enqueueNDRangeKernel(pair.second, cl::NullRange,
+                                       cl::NDRange(1), cl::NDRange(1),
+                                       &load_event_, &compute_event_[i]));
+    ++i;
+  }
 }
 
 void Instance::Finish() {
