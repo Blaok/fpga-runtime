@@ -1,4 +1,4 @@
-#ifndef FPGA_RUNTIME_H_
+﻿#ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
 
 #include <algorithm>
@@ -184,19 +184,30 @@ inline std::ostream& operator<<(std::ostream& os, const ArgInfo& arg) {
   return os;
 }
 
+enum class Vendor {
+  kUnknown = 0,
+  kXilinx = 1,
+  kIntel = 2,
+};
+
 class Instance {
   cl::Device device_;
   cl::Context context_;
   cl::CommandQueue cmd_;
   cl::Program program_;
   cl::Kernel kernel_;
-  std::unordered_map<int, cl::Memory> buffer_table_;
+  std::unordered_map<int, cl::Buffer> buffer_table_;
+  std::unordered_map<int, void*> host_ptr_table_;
   std::unordered_map<int32_t, ArgInfo> arg_table_;
-  std::vector<cl::Memory> load_buffers_;
-  std::vector<cl::Memory> store_buffers_;
+  std::vector<int> load_indices_;
+  std::vector<int> store_indices_;
   std::vector<cl::Event> load_event_;
   std::vector<cl::Event> compute_event_;
   std::vector<cl::Event> store_event_;
+  Vendor vendor_ = Vendor::kUnknown;
+
+  std::vector<cl::Memory> GetLoadBuffers();
+  std::vector<cl::Memory> GetStoreBuffers();
 
  public:
   Instance(const std::string& bitstream);
@@ -300,64 +311,58 @@ class Instance {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
     cl::Buffer buffer = CreateBuffer(
-        index, flags, arg.SizeInBytes(),
+        index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
         const_cast<typename std::remove_const<T>::type*>(arg.Get()));
-    load_buffers_.push_back(buffer);
+    load_indices_.push_back(index);
   }
   template <typename T>
   void AllocBuf(int index, WoBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
     cl::Buffer buffer = CreateBuffer(
-        index, flags, arg.SizeInBytes(),
+        index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
         const_cast<typename std::remove_const<T>::type*>(arg.Get()));
-    load_buffers_.push_back(buffer);
+    load_indices_.push_back(index);
   }
   template <typename T>
   void AllocBuf(int index, RoBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY;
     cl::Buffer buffer =
-        CreateBuffer(index, flags, arg.SizeInBytes(), arg.Get());
-    store_buffers_.push_back(buffer);
+        CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
+    store_indices_.push_back(index);
   }
   template <typename T>
   void AllocBuf(int index, RoBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY;
     cl::Buffer buffer =
-        CreateBuffer(index, flags, arg.SizeInBytes(), arg.Get());
-    store_buffers_.push_back(buffer);
+        CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
+    store_indices_.push_back(index);
   }
   template <typename T>
   void AllocBuf(int index, RwBuf<T>& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
     cl::Buffer buffer =
-        CreateBuffer(index, flags, arg.SizeInBytes(), arg.Get());
-    load_buffers_.push_back(buffer);
-    store_buffers_.push_back(buffer);
+        CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
+    load_indices_.push_back(index);
+    store_indices_.push_back(index);
   }
   template <typename T>
   void AllocBuf(int index, RwBuf<T>&& arg) {
 #ifndef NDEBUG
     FUNC_INFO(index)
 #endif
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
     cl::Buffer buffer =
-        CreateBuffer(index, flags, arg.SizeInBytes(), arg.Get());
-    load_buffers_.push_back(buffer);
-    store_buffers_.push_back(buffer);
+        CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
+    load_indices_.push_back(index);
+    store_indices_.push_back(index);
   }
   void AllocBuf(int index, WriteStream& arg) {
 #ifndef NDEBUG

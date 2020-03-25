@@ -1,4 +1,4 @@
-#define KEEP_CL_CHECK
+﻿#define KEEP_CL_CHECK
 #include "frt.h"
 
 #include <cstring>
@@ -10,10 +10,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include <CL/cl_ext.h>
+#include <elf.h>
+
 #include <tinyxml.h>
-#include <xclbin.h>
 #include <CL/cl2.hpp>
+
+#include <CL/cl_ext_xilinx.h>
+#include <xclbin.h>
 
 using std::clog;
 using std::endl;
@@ -47,6 +50,24 @@ cl::Program::Binaries LoadBinaryFile(const string& file_name) {
            std::istreambuf_iterator<char>()}};
 }
 
+vector<cl::Memory> Instance::GetLoadBuffers() {
+  vector<cl::Memory> buffers;
+  buffers.reserve(this->load_indices_.size());
+  for (auto index : this->load_indices_) {
+    buffers.push_back(this->buffer_table_[index]);
+  }
+  return buffers;
+}
+
+vector<cl::Memory> Instance::GetStoreBuffers() {
+  vector<cl::Memory> buffers;
+  buffers.reserve(this->store_indices_.size());
+  for (auto index : this->store_indices_) {
+    buffers.push_back(this->buffer_table_[index]);
+  }
+  return buffers;
+}
+
 Instance::Instance(const string& bitstream) {
   cl::Program::Binaries binaries = LoadBinaryFile(bitstream);
   string target_device_name;
@@ -54,6 +75,7 @@ Instance::Instance(const string& bitstream) {
   string kernel_name;
   for (const auto& binary : binaries) {
     if (binary.size() >= 8 && memcmp(binary.data(), "xclbin2", 8) == 0) {
+      this->vendor_ = Vendor::kXilinx;
       vendor_name = "Xilinx";
       const auto axlf_top = reinterpret_cast<const axlf*>(binary.data());
       switch (axlf_top->m_header.m_mode) {
@@ -139,6 +161,79 @@ Instance::Instance(const string& bitstream) {
           arg_table_[c.arg_index].tag = memory_table[c.mem_data_index];
         }
       }
+    } else if (binary.size() >= SELFMAG &&
+               memcmp(binary.data(), ELFMAG, SELFMAG) == 0) {
+      this->vendor_ = Vendor::kIntel;
+      if (binary.data()[EI_CLASS] == ELFCLASS32) {
+        vendor_name = "Intel(R) FPGA SDK for OpenCL(TM)";
+        auto elf_header = reinterpret_cast<const Elf32_Ehdr*>(binary.data());
+        auto elf_section_headers = reinterpret_cast<const Elf32_Shdr*>(
+            (reinterpret_cast<const char*>(elf_header) + elf_header->e_shoff));
+        auto elf_section = [&](int idx) -> const Elf32_Shdr* {
+          return &elf_section_headers[idx];
+        };
+        auto elf_str_table =
+            (elf_header->e_shstrndx == SHN_UNDEF)
+                ? nullptr
+                : reinterpret_cast<const char*>(elf_header) +
+                      elf_section(elf_header->e_shstrndx)->sh_offset;
+        auto elf_lookup_string = [&](int offset) -> const char* {
+          return elf_str_table ? elf_str_table + offset : nullptr;
+        };
+        for (int i = 0; i < elf_header->e_shnum; ++i) {
+          auto section_header = elf_section(i);
+          auto section_name = elf_lookup_string(section_header->sh_name);
+          if (strcmp(section_name, ".acl.kernel_arg_info.xml") == 0) {
+            TiXmlDocument doc;
+            doc.Parse(reinterpret_cast<const char*>(elf_header) +
+                          section_header->sh_offset,
+                      0, TIXML_ENCODING_UTF8);
+            auto xml_kernel =
+                doc.FirstChildElement("board")->FirstChildElement("kernel");
+            kernel_name = xml_kernel->Attribute("name");
+            for (auto xml_arg = xml_kernel->FirstChildElement("argument");
+                 xml_arg != nullptr;
+                 xml_arg = xml_arg->NextSiblingElement("argument")) {
+              auto index = atoi(xml_arg->Attribute("index"));
+              auto& arg = this->arg_table_[index];
+              arg.index = index;
+              arg.name = xml_arg->Attribute("name");
+              arg.type = xml_arg->Attribute("type_name");
+              auto cat = atoi(xml_arg->Attribute("opencl_access_type"));
+              switch (cat) {
+                case 0:
+                  arg.cat = ArgInfo::kScalar;
+                  break;
+                case 2:
+                  arg.cat = ArgInfo::kMmap;
+                  break;
+                default:
+                  clog << "WARNING: Unknown argument category: " << cat;
+              }
+            }
+          } else if (strcmp(section_name, ".acl.board") == 0) {
+            const string board_name(reinterpret_cast<const char*>(elf_header) +
+                                        section_header->sh_offset,
+                                    section_header->sh_size);
+            if (board_name == "EmulatorDevice") {
+              setenv("CL_CONTEXT_EMULATOR_DEVICE_INTELFPGA", "1", 0);
+            }
+            if (board_name == "SimulatorDevice") {
+              setenv("CL_CONTEXT_MPSIM_DEVICE_INTELFPGA", "1", 0);
+            }
+            target_device_name = board_name;
+          }
+        }
+        if (kernel_name.empty() || target_device_name.empty()) {
+          throw runtime_error("unexpected ELF file");
+        }
+      } else if (binary.data()[EI_CLASS] == ELFCLASS64) {
+        vendor_name = "Intel(R) FPGA Emulation Platform for OpenCL(TM)";
+        target_device_name = "Intel(R) FPGA Emulation Device";
+        throw runtime_error("fast emulator not supported");
+      } else {
+        throw runtime_error("unexpected ELF file");
+      }
     } else {
       throw runtime_error("unexpected bitstream file");
     }
@@ -204,11 +299,28 @@ Instance::Instance(const string& bitstream) {
         const string device_name = device.getInfo<CL_DEVICE_NAME>(&err);
         CL_CHECK(err);
         clog << "INFO: Found device: " << device_name << endl;
-        if (device_name == target_device_name) {
+        // Intel devices contain a string that is unavailable from the binary.
+        bool is_target_device = false;
+        switch (this->vendor_) {
+          case Vendor::kXilinx: {
+            is_target_device = device_name == target_device_name;
+            break;
+          }
+          case Vendor::kIntel: {
+            string prefix = target_device_name + " : ";
+            is_target_device = device_name.substr(0, prefix.size()) == prefix;
+            break;
+          }
+          default:
+            throw runtime_error("unknown vendor");
+        }
+        if (is_target_device) {
           clog << "INFO: Using " << device_name << endl;
           device_ = device;
           context_ = cl::Context(device, nullptr, nullptr, nullptr, &err);
           if (err == CL_DEVICE_NOT_AVAILABLE) {
+            clog << "WARNING: Device ‘" << device_name << "’ not available"
+                 << endl;
             continue;
           }
           CL_CHECK(err);
@@ -229,39 +341,56 @@ Instance::Instance(const string& bitstream) {
           return;
         }
       }
+      throw runtime_error("target device ‘" + target_device_name +
+                          "’ not found");
     }
   }
+  throw runtime_error("target platform ‘" + vendor_name + "’ not found");
 }
 
 cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
                                   void* host_ptr) {
-  cl_mem_ext_ptr_t ext;
-  if (arg_table_.count(index)) {
-    unordered_map<string, decltype(XCL_MEM_DDR_BANK0)> kTagTable{
-        {"bank0", XCL_MEM_DDR_BANK0},  {"bank1", XCL_MEM_DDR_BANK1},
-        {"bank2", XCL_MEM_DDR_BANK2},  {"bank3", XCL_MEM_DDR_BANK3},
-        {"DDR[0]", XCL_MEM_DDR_BANK0}, {"DDR[1]", XCL_MEM_DDR_BANK1},
-        {"DDR[2]", XCL_MEM_DDR_BANK2}, {"DDR[3]", XCL_MEM_DDR_BANK3},
-    };
-    for (int i = 0; i < 32; ++i) {
-      kTagTable["HBM[" + std::to_string(i) + "]"] = i | XCL_MEM_TOPOLOGY;
-    }
-    ext.flags = 0;
-    auto flag = kTagTable.find(arg_table_[index].tag);
-    if (flag != kTagTable.end()) {
-      ext.flags = flag->second;
+  cl_mem_ext_ptr_t ext;  // must in the same scope as host_ptr
+  switch (this->vendor_) {
+    case Vendor::kXilinx: {
+      flags |= CL_MEM_USE_HOST_PTR;
+      if (arg_table_.count(index)) {
+        unordered_map<string, decltype(XCL_MEM_DDR_BANK0)> kTagTable{
+            {"bank0", XCL_MEM_DDR_BANK0},  {"bank1", XCL_MEM_DDR_BANK1},
+            {"bank2", XCL_MEM_DDR_BANK2},  {"bank3", XCL_MEM_DDR_BANK3},
+            {"DDR[0]", XCL_MEM_DDR_BANK0}, {"DDR[1]", XCL_MEM_DDR_BANK1},
+            {"DDR[2]", XCL_MEM_DDR_BANK2}, {"DDR[3]", XCL_MEM_DDR_BANK3},
+        };
+        for (int i = 0; i < 32; ++i) {
+          kTagTable["HBM[" + std::to_string(i) + "]"] = i | XCL_MEM_TOPOLOGY;
+        }
+        ext.flags = 0;
+        auto flag = kTagTable.find(arg_table_[index].tag);
+        if (flag != kTagTable.end()) {
+          ext.flags = flag->second;
 #ifndef NDEBUG
-      clog << "DEBUG: Argument " << index << " assigned to "
-           << arg_table_[index].tag << endl;
+          clog << "DEBUG: Argument " << index << " assigned to "
+               << arg_table_[index].tag << endl;
 #endif
-    } else if (!arg_table_[index].tag.empty()) {
-      clog << "WARNING: Unknown argument memory tag: " << arg_table_[index].tag
-           << endl;
+        } else if (!arg_table_[index].tag.empty()) {
+          clog << "WARNING: Unknown argument memory tag: "
+               << arg_table_[index].tag << endl;
+        }
+        ext.obj = host_ptr;
+        ext.param = nullptr;
+        flags |= CL_MEM_EXT_PTR_XILINX;
+        host_ptr = &ext;
+      }
+      break;
     }
-    ext.obj = host_ptr;
-    ext.param = nullptr;
-    flags |= CL_MEM_EXT_PTR_XILINX;
-    host_ptr = &ext;
+    case Vendor::kIntel: {
+      flags |= /* CL_MEM_HETEROGENEOUS_INTELFPGA = */ 1 << 19;
+      host_ptr_table_[index] = host_ptr;
+      host_ptr = nullptr;
+      break;
+    }
+    default:
+      throw runtime_error("unknown vendor");
   }
   cl_int err;
   auto buffer = cl::Buffer(context_, flags, size, host_ptr, &err);
@@ -271,19 +400,58 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
 }
 
 void Instance::WriteToDevice() {
-  if (!load_buffers_.empty()) {
-    load_event_.resize(1);
-    CL_CHECK(cmd_.enqueueMigrateMemObjects(load_buffers_, /* flags = */ 0,
-                                           nullptr, load_event_.data()));
+  switch (this->vendor_) {
+    case Vendor::kXilinx: {
+      if (!load_indices_.empty()) {
+        load_event_.resize(1);
+        CL_CHECK(cmd_.enqueueMigrateMemObjects(
+            GetLoadBuffers(), /* flags = */ 0, /* events = */ nullptr,
+            load_event_.data()));
+      }
+      break;
+    }
+    case Vendor::kIntel: {
+      load_event_.resize(this->load_indices_.size());
+      for (size_t i = 0; i < this->load_indices_.size(); ++i) {
+        auto index = this->load_indices_[i];
+        auto buffer = this->buffer_table_[index];
+        CL_CHECK(cmd_.enqueueWriteBuffer(
+            buffer, /* blocking = */ CL_FALSE, /* offset = */ 0,
+            buffer.getInfo<CL_MEM_SIZE>(), host_ptr_table_[index],
+            /* events = */ nullptr, &load_event_[i]));
+      }
+      break;
+    }
+    default:
+      throw runtime_error("unknown vendor");
   }
 }
 
 void Instance::ReadFromDevice() {
-  if (!store_buffers_.empty()) {
-    store_event_.resize(1);
-    CL_CHECK(cmd_.enqueueMigrateMemObjects(
-        store_buffers_, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
-        store_event_.data()));
+  switch (this->vendor_) {
+    case Vendor::kXilinx: {
+      if (!store_indices_.empty()) {
+        store_event_.resize(1);
+        CL_CHECK(cmd_.enqueueMigrateMemObjects(
+            GetStoreBuffers(), CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
+            store_event_.data()));
+      }
+      break;
+    }
+    case Vendor::kIntel: {
+      store_event_.resize(this->store_indices_.size());
+      for (size_t i = 0; i < this->store_indices_.size(); ++i) {
+        auto index = this->store_indices_[i];
+        auto buffer = this->buffer_table_[index];
+        cmd_.enqueueReadBuffer(buffer, /* blocking = */ CL_FALSE,
+                               /* offset = */ 0, buffer.getInfo<CL_MEM_SIZE>(),
+                               host_ptr_table_[index], &compute_event_,
+                               &store_event_[i]);
+      }
+      break;
+    }
+    default:
+      throw runtime_error("unknown vendor");
   }
 }
 
@@ -344,14 +512,14 @@ double Instance::ComputeTimeSeconds() { return ComputeTimeNanoSeconds() / 1e9; }
 double Instance::StoreTimeSeconds() { return StoreTimeNanoSeconds() / 1e9; }
 double Instance::LoadThroughputGbps() {
   size_t total_size = 0;
-  for (const auto& buffer : load_buffers_) {
+  for (const auto& buffer : GetLoadBuffers()) {
     total_size += buffer.getInfo<CL_MEM_SIZE>();
   }
   return double(total_size) / LoadTimeNanoSeconds();
 }
 double Instance::StoreThroughputGbps() {
   size_t total_size = 0;
-  for (const auto& buffer : store_buffers_) {
+  for (const auto& buffer : GetStoreBuffers()) {
     total_size += buffer.getInfo<CL_MEM_SIZE>();
   }
   return double(total_size) / StoreTimeNanoSeconds();
