@@ -6,7 +6,7 @@ target_compile_features(qdma-vadd PRIVATE cxx_auto_type)
 target_link_libraries(qdma-vadd PRIVATE frt pthread)
 
 if(NOT XRT_PLATFORM)
-  set(XRT_PLATFORM xilinx_u200_qdma_201910_1)
+  set(XRT_PLATFORM xilinx_u200_qdma_201920_1)
 endif()
 set(KERNEL VecAdd)
 
