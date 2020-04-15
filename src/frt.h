@@ -428,12 +428,6 @@ class Instance {
     return *this;
   }
 
-  template <cl_profiling_info name>
-  cl_ulong LoadProfilingInfo();
-  template <cl_profiling_info name>
-  cl_ulong ComputeProfilingInfo();
-  template <cl_profiling_info name>
-  cl_ulong StoreProfilingInfo();
   cl_ulong LoadTimeNanoSeconds();
   cl_ulong ComputeTimeNanoSeconds();
   cl_ulong StoreTimeNanoSeconds();

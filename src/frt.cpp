@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
@@ -41,6 +42,37 @@ string Exec(const char* cmd) {
   }
   return result;
 }
+
+template <cl_profiling_info name>
+cl_ulong GetTime(const cl::Event& event) {
+  cl_int err;
+  auto time = event.getProfilingInfo<name>(&err);
+  CL_CHECK(err);
+  return time;
+}
+
+template <cl_profiling_info name>
+cl_ulong Earliest(const vector<cl::Event>& events, cl_ulong default_value = 0) {
+  if (events.size() != 0) {
+    default_value = std::numeric_limits<cl_ulong>::max();
+    for (auto& event : events) {
+      default_value = std::min(default_value, GetTime<name>(event));
+    }
+  }
+  return default_value;
+}
+
+template <cl_profiling_info name>
+cl_ulong Latest(const vector<cl::Event>& events, cl_ulong default_value = 0) {
+  if (events.size() != 0) {
+    default_value = std::numeric_limits<cl_ulong>::min();
+    for (auto& event : events) {
+      default_value = std::max(default_value, GetTime<name>(event));
+    }
+  }
+  return default_value;
+}
+
 }  // namespace internal
 
 cl::Program::Binaries LoadBinaryFile(const string& file_name) {
@@ -490,45 +522,17 @@ void Instance::Finish() {
   CL_CHECK(cmd_.finish());
 }
 
-template <cl_profiling_info name>
-cl_ulong ProfilingInfo(const cl::Event& event) {
-  cl_int err;
-  auto time = event.getProfilingInfo<name>(&err);
-  CL_CHECK(err);
-  return time;
-}
-template <cl_profiling_info name>
-cl_ulong Instance::LoadProfilingInfo() {
-  if (load_event_.empty()) {
-    return 0ULL;
-  }
-  return ProfilingInfo<name>(load_event_[0]);
-}
-template <cl_profiling_info name>
-cl_ulong Instance::ComputeProfilingInfo() {
-  if (compute_event_.empty()) {
-    return 0ULL;
-  }
-  return ProfilingInfo<name>(compute_event_[0]);
-}
-template <cl_profiling_info name>
-cl_ulong Instance::StoreProfilingInfo() {
-  if (store_event_.empty()) {
-    return 0ULL;
-  }
-  return ProfilingInfo<name>(store_event_[0]);
-}
 cl_ulong Instance::LoadTimeNanoSeconds() {
-  return LoadProfilingInfo<CL_PROFILING_COMMAND_END>() -
-         LoadProfilingInfo<CL_PROFILING_COMMAND_START>();
+  return internal::Latest<CL_PROFILING_COMMAND_END>(this->load_event_) -
+         internal::Earliest<CL_PROFILING_COMMAND_START>(this->load_event_);
 }
 cl_ulong Instance::ComputeTimeNanoSeconds() {
-  return ComputeProfilingInfo<CL_PROFILING_COMMAND_END>() -
-         ComputeProfilingInfo<CL_PROFILING_COMMAND_START>();
+  return internal::Latest<CL_PROFILING_COMMAND_END>(this->compute_event_) -
+         internal::Earliest<CL_PROFILING_COMMAND_START>(this->compute_event_);
 }
 cl_ulong Instance::StoreTimeNanoSeconds() {
-  return StoreProfilingInfo<CL_PROFILING_COMMAND_END>() -
-         StoreProfilingInfo<CL_PROFILING_COMMAND_START>();
+  return internal::Latest<CL_PROFILING_COMMAND_END>(this->store_event_) -
+         internal::Earliest<CL_PROFILING_COMMAND_START>(this->store_event_);
 }
 double Instance::LoadTimeSeconds() { return LoadTimeNanoSeconds() / 1e9; }
 double Instance::ComputeTimeSeconds() { return ComputeTimeNanoSeconds() / 1e9; }
@@ -547,11 +551,5 @@ double Instance::StoreThroughputGbps() {
   }
   return double(total_size) / StoreTimeNanoSeconds();
 }
-template cl_ulong Instance::LoadProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
-template cl_ulong Instance::LoadProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
-template cl_ulong Instance::ComputeProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
-template cl_ulong Instance::ComputeProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
-template cl_ulong Instance::StoreProfilingInfo<CL_PROFILING_COMMAND_QUEUED>();
-template cl_ulong Instance::StoreProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>();
 
 }  // namespace fpga
