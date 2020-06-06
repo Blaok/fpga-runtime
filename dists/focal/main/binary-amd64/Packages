@@ -1,0 +1,17 @@
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20200605.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 351
+Depends: jq, libtinyxml-dev, opencl-headers
+Recommends: csh, xrt
+Filename: pool/main/focal/libfrt-dev_0.0.20200605.1_amd64.deb
+Size: 96028
+MD5sum: 2fb542d27e05a3c1223d12191ec2c55f
+SHA1: 57f07d73f169643d955d30b8c98f9d4b1284c3e8
+SHA256: 151f77e5ae897c10c354368da8e41f95a8e6a21c92bf55a12d31a3021a0d1d2a
+SHA512: f36039485d502834627e0471caabf4b55494f1e101b61131de74be4f559817de006f886623b00d4768b595659a366a584180a778a6be594e87665d5a21d5a44a
+Description: FPGA Runtime for PCIe-Based FPGAs
+
