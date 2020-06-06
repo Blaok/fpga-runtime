@@ -73,13 +73,71 @@ cl_ulong Latest(const vector<cl::Event>& events, cl_ulong default_value = 0) {
   return default_value;
 }
 
-}  // namespace internal
-
 cl::Program::Binaries LoadBinaryFile(const string& file_name) {
   clog << "INFO: Loading " << file_name << endl;
   std::ifstream stream(file_name, std::ios::binary);
   return {{std::istreambuf_iterator<char>(stream),
            std::istreambuf_iterator<char>()}};
+}
+
+}  // namespace internal
+
+Stream::~Stream() {
+  if (stream_ != nullptr) {
+    CL_CHECK(clReleaseStream(stream_));
+  }
+}
+
+void Stream::Attach(const cl::Device& device, const cl::Kernel& kernel,
+                    int index, cl_stream_flags flags) {
+#ifndef NDEBUG
+  std::clog << "DEBUG: Stream ‘" << name_ << "’ attached to argument #" << index
+            << std::endl;
+#endif
+  cl_mem_ext_ptr_t ext;
+  ext.flags = index;
+  ext.param = kernel.get();
+  ext.obj = nullptr;
+  cl_int err;
+  stream_ = clCreateStream(device.get(), flags, CL_STREAM, &ext, &err);
+  CL_CHECK(err);
+}
+
+void ReadStream::Attach(const cl::Device& device, const cl::Kernel& kernel,
+                        int index) {
+  Attach(device, kernel, index, CL_STREAM_READ_ONLY);
+}
+
+void ReadStream::ReadRaw(void* host_ptr, uint64_t size, bool eos) {
+  if (stream_ == nullptr) {
+    throw std::runtime_error("cannot read from null stream");
+  }
+  cl_stream_xfer_req req{0};
+  if (eos) {
+    req.flags = CL_STREAM_EOT;
+  }
+  req.priv_data = const_cast<char*>(name_.c_str());
+  cl_int err;
+  clReadStream(stream_, host_ptr, size, &req, &err);
+  CL_CHECK(err);
+}
+
+void WriteStream::Attach(cl::Device device, cl::Kernel kernel, int index) {
+  Attach(device, kernel, index, CL_STREAM_WRITE_ONLY);
+}
+
+void WriteStream::WriteRaw(const void* host_ptr, uint64_t size, bool eos) {
+  if (stream_ == nullptr) {
+    throw std::runtime_error("cannot write to null stream");
+  }
+  cl_stream_xfer_req req{0};
+  if (eos) {
+    req.flags = CL_STREAM_EOT;
+  }
+  req.priv_data = const_cast<char*>(name_.c_str());
+  cl_int err;
+  clWriteStream(stream_, const_cast<void*>(host_ptr), size, &req, &err);
+  CL_CHECK(err);
 }
 
 vector<cl::Memory> Instance::GetLoadBuffers() {
@@ -101,7 +159,7 @@ vector<cl::Memory> Instance::GetStoreBuffers() {
 }
 
 Instance::Instance(const string& bitstream) {
-  cl::Program::Binaries binaries = LoadBinaryFile(bitstream);
+  cl::Program::Binaries binaries = internal::LoadBinaryFile(bitstream);
   string target_device_name;
   string vendor_name;
   vector<string> kernel_names;
@@ -305,9 +363,9 @@ Instance::Instance(const string& bitstream) {
     string ld_library_path;
     if (auto xilinx_sdx = getenv("XILINX_VITIS")) {
       // find LD_LIBRARY_PATH by sourcing ${XILINX_VITIS}/settings64.sh
-      ld_library_path = internal::Exec(
-          R"(bash -c '. "${XILINX_VITIS}/settings64.sh" && )"
-          R"(printf "${LD_LIBRARY_PATH}"')");
+      ld_library_path =
+          internal::Exec(R"(bash -c '. "${XILINX_VITIS}/settings64.sh" && )"
+                         R"(printf "${LD_LIBRARY_PATH}"')");
     } else {
       // find XILINX_VITIS and LD_LIBRARY_PATH with vivado_hls
       // ld_library_path is null-separated string of both env vars
@@ -319,9 +377,9 @@ Instance::Instance(const string& bitstream) {
     }
     if (auto xilinx_sdx = getenv("XILINX_SDX")) {
       // find LD_LIBRARY_PATH by sourcing ${XILINX_SDX}/settings64.sh
-      ld_library_path = internal::Exec(
-          R"(bash -c '. "${XILINX_SDX}/settings64.sh" && )"
-          R"(printf "${LD_LIBRARY_PATH}"')");
+      ld_library_path =
+          internal::Exec(R"(bash -c '. "${XILINX_SDX}/settings64.sh" && )"
+                         R"(printf "${LD_LIBRARY_PATH}"')");
     } else {
       // find XILINX_SDX and LD_LIBRARY_PATH with vivado_hls
       // ld_library_path is null-separated string of both env vars

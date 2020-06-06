@@ -33,7 +33,6 @@ target_compile_features(frt_shared PUBLIC cxx_alias_templates cxx_nullptr
 set_target_properties(
   frt_static frt_shared
   PROPERTIES OUTPUT_NAME frt PUBLIC_HEADER "src/frt.h;src/opencl-errors.h"
-
              POSITION_INDEPENDENT_CODE ON)
 target_include_directories(
   frt_static PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
@@ -93,8 +92,8 @@ set(CPACK_PACKAGE_VERSION_MINOR 0)
 set(CPACK_PACKAGE_VERSION_PATCH 20200414.1)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FPGA Runtime for PCIe-Based FPGAs")
 
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "jq, libtinyxml-dev, opencl-headers, xrt")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "csh")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "jq, libtinyxml-dev, opencl-headers")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "csh, xrt")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Blaok Chi")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)

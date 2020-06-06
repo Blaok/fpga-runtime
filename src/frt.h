@@ -14,10 +14,13 @@
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
-#include <CL/cl_ext_xilinx.h>
 #include <CL/cl2.hpp>
 
 #include "opencl-errors.h"
+
+extern "C" {
+struct _cl_stream;
+}  // extern "C"
 
 namespace fpga {
 
@@ -74,30 +77,14 @@ RwBuf<T> ReadWrite(T* ptr, size_t n) {
 class Stream {
  protected:
   const std::string name_;
-  cl_stream stream_ = nullptr;
+  _cl_stream* stream_ = nullptr;
 
   Stream(const std::string& name) : name_(name) {}
   Stream(const Stream&) = delete;
-  ~Stream() {
-    if (stream_ != nullptr) {
-      CL_CHECK(clReleaseStream(stream_));
-    }
-  }
+  ~Stream();
 
   void Attach(const cl::Device& device, const cl::Kernel& kernel, int index,
-              cl_stream_flags flags) {
-#ifndef NDEBUG
-    std::clog << "DEBUG: Stream ‘" << name_ << "’ attached to argument #"
-              << index << std::endl;
-#endif
-    cl_mem_ext_ptr_t ext;
-    ext.flags = index;
-    ext.param = kernel.get();
-    ext.obj = nullptr;
-    cl_int err;
-    stream_ = clCreateStream(device.get(), flags, CL_STREAM, &ext, &err);
-    CL_CHECK(err);
-  }
+              cl_stream_flags flags);
 };
 
 class ReadStream : public Stream {
@@ -106,24 +93,15 @@ class ReadStream : public Stream {
   ReadStream(const std::string& name) : Stream(name) {}
   ReadStream(const ReadStream&) = delete;
 
-  void Attach(const cl::Device& device, const cl::Kernel& kernel, int index) {
-    Attach(device, kernel, index, CL_STREAM_READ_ONLY);
-  }
+  void Attach(const cl::Device& device, const cl::Kernel& kernel, int index);
 
   template <typename T>
   void Read(T* host_ptr, uint64_t size, bool eos = true) {
-    if (stream_ == nullptr) {
-      throw std::runtime_error("cannot read from null stream");
-    }
-    cl_stream_xfer_req req{0};
-    if (eos) {
-      req.flags = CL_STREAM_EOT;
-    }
-    req.priv_data = const_cast<char*>(name_.c_str());
-    cl_int err;
-    clReadStream(stream_, host_ptr, size * sizeof(T), &req, &err);
-    CL_CHECK(err);
+    ReadRaw(host_ptr, size * sizeof(T), eos);
   }
+
+ private:
+  void ReadRaw(void* host_ptr, uint64_t size, bool eos);
 };
 
 class WriteStream : public Stream {
@@ -132,25 +110,15 @@ class WriteStream : public Stream {
   WriteStream(const std::string& name) : Stream(name) {}
   WriteStream(const WriteStream&) = delete;
 
-  void Attach(cl::Device device, cl::Kernel kernel, int index) {
-    Attach(device, kernel, index, CL_STREAM_WRITE_ONLY);
-  }
+  void Attach(cl::Device device, cl::Kernel kernel, int index);
 
   template <typename T>
   void Write(const T* host_ptr, uint64_t size, bool eos = true) {
-    if (stream_ == nullptr) {
-      throw std::runtime_error("cannot write to null stream");
-    }
-    cl_stream_xfer_req req{0};
-    if (eos) {
-      req.flags = CL_STREAM_EOT;
-    }
-    req.priv_data = const_cast<char*>(name_.c_str());
-    cl_int err;
-    clWriteStream(stream_, const_cast<T*>(host_ptr), size * sizeof(T), &req,
-                  &err);
-    CL_CHECK(err);
+    WriteRaw(host_ptr, size * sizeof(T), eos);
   }
+
+ private:
+  void WriteRaw(const void* host_ptr, uint64_t size, bool eos);
 };
 
 struct ArgInfo {
