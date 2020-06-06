@@ -95,10 +95,10 @@ Depends: jq, libtinyxml-dev, opencl-headers
 Recommends: csh, xrt
 Filename: pool/main/xenial/libfrt-dev_0.0.20200605.1_amd64.deb
 Size: 97830
-MD5sum: ddcdb2d20bc9634025e8bda077d5beba
-SHA1: c582e6ed0879b97a1c559908205b75a715da0d6d
-SHA256: b9e13050fb1ec7864fc2b5c64577080cdb1fcd33cb5c807e62f31d499e880f78
-SHA512: 9c80c9232e1eee7deb870cb20bc1c9bf6ae93ccd2d4861e97069f07ef83517f64c866d976aa1e0eedb6e6e536e77d47f74161d1e77f24a0536fb5e8376220013
+MD5sum: 84d2226c75dec2b97632c307efdb6e0b
+SHA1: f31c200a9c6ca26fe6076172f4fe922b25a9547c
+SHA256: c39d995b21f7b3bea8ff75d3c145769690dd7cd874e7f7d7ddd97c09bcd4ef3f
+SHA512: b6817adffd9b30bfb1a722019ca270a3f485684a04f151d15c283202d3ebde7365b1e0148f5c5aeb6422f0a55c4f7819bc89d634e1a65e2d03bd50019d588e5f
 Description: FPGA Runtime for PCIe-Based FPGAs
 
 Package: libfrt-dev
