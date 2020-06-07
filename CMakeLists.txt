@@ -40,12 +40,12 @@ target_include_directories(
   frt_shared PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 target_link_libraries(
   frt_static
-  PRIVATE TinyXML::TinyXML
-  PUBLIC OpenCL::OpenCL xrt::xrt)
+  PRIVATE TinyXML::TinyXML xrt::xrt
+  PUBLIC OpenCL::OpenCL)
 target_link_libraries(
   frt_shared
-  PRIVATE TinyXML::TinyXML
-  PUBLIC OpenCL::OpenCL xrt::xrt)
+  PRIVATE TinyXML::TinyXML xrt::xrt
+  PUBLIC OpenCL::OpenCL)
 
 include(GNUInstallDirs)
 install(
