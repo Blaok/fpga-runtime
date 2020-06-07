@@ -86,7 +86,7 @@ class Stream {
   ~Stream();
 
   void Attach(const cl::Device& device, const cl::Kernel& kernel, int index,
-              cl_stream_flags flags);
+              /* cl_stream_flags */ uint64_t flags);
 };
 
 class ReadStream : public Stream {
