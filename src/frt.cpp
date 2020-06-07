@@ -94,6 +94,8 @@ void Stream::Attach(const cl::Device& device, const cl::Kernel& kernel,
   std::clog << "DEBUG: Stream ‘" << name_ << "’ attached to argument #" << index
             << std::endl;
 #endif
+  kernel_ = kernel;
+  device_ = device;
   cl_mem_ext_ptr_t ext;
   ext.flags = index;
   ext.param = kernel.get();

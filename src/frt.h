@@ -78,6 +78,8 @@ class Stream {
  protected:
   const std::string name_;
   _cl_stream* stream_ = nullptr;
+  cl::Kernel kernel_;
+  cl::Device device_;
 
   Stream(const std::string& name) : name_(name) {}
   Stream(const Stream&) = delete;
