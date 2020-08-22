@@ -31,9 +31,13 @@ inline void ClCheck(cl_int err, const char* file, int line) {
                              ": " + ToString(err));
   }
 }
+#ifdef NDEBUG
+#define FUNC_INFO(index)
+#else  // NDEBUG
 #define FUNC_INFO(index)                                  \
   std::clog << "DEBUG: Function ‘" << __PRETTY_FUNCTION__ \
             << "’ called with index = " << (index) << std::endl;
+#endif  // NDEBUG
 
 template <typename T>
 class Buffer {
@@ -211,63 +215,26 @@ class Instance {
   // SetArg
   template <typename T>
   void SetArg(int index, T&& arg) {
-#ifndef NDEBUG
     FUNC_INFO(index)
-#endif
     this->SetArgInternal(index, arg);
   }
   template <typename T>
-  void SetArg(int index, RoBuf<T>& arg) {
-#ifndef NDEBUG
+  void SetArg(int index, RoBuf<T> arg) {
     FUNC_INFO(index)
-#endif
     this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
-  void SetArg(int index, RoBuf<T>&& arg) {
-#ifndef NDEBUG
+  void SetArg(int index, WoBuf<T> arg) {
     FUNC_INFO(index)
-#endif
     this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
-  void SetArg(int index, WoBuf<T>& arg) {
-#ifndef NDEBUG
+  void SetArg(int index, RwBuf<T> arg) {
     FUNC_INFO(index)
-#endif
     this->SetArgInternal(index, buffer_table_[index]);
   }
-  template <typename T>
-  void SetArg(int index, WoBuf<T>&& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  template <typename T>
-  void SetArg(int index, RwBuf<T>& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  template <typename T>
-  void SetArg(int index, RwBuf<T>&& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  void SetArg(int index, WriteStream& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-  }
-  void SetArg(int index, ReadStream& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-  }
+  void SetArg(int index, WriteStream& arg) { FUNC_INFO(index) }
+  void SetArg(int index, ReadStream& arg) { FUNC_INFO(index) }
   template <typename T, typename... Args>
   void SetArg(int index, T&& arg, Args&&... other_args) {
     SetArg(index, std::forward<T>(arg));
@@ -284,79 +251,38 @@ class Instance {
   // AllocBuf
   template <typename T>
   void AllocBuf(int index, T&& arg) {
-#ifndef NDEBUG
     FUNC_INFO(index)
-#endif
   }
   template <typename T>
-  void AllocBuf(int index, WoBuf<T>& arg) {
-#ifndef NDEBUG
+  void AllocBuf(int index, WoBuf<T> arg) {
     FUNC_INFO(index)
-#endif
     cl::Buffer buffer = CreateBuffer(
         index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
         const_cast<typename std::remove_const<T>::type*>(arg.Get()));
     load_indices_.push_back(index);
   }
   template <typename T>
-  void AllocBuf(int index, WoBuf<T>&& arg) {
-#ifndef NDEBUG
+  void AllocBuf(int index, RoBuf<T> arg) {
     FUNC_INFO(index)
-#endif
-    cl::Buffer buffer = CreateBuffer(
-        index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
-        const_cast<typename std::remove_const<T>::type*>(arg.Get()));
-    load_indices_.push_back(index);
-  }
-  template <typename T>
-  void AllocBuf(int index, RoBuf<T>& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
     cl::Buffer buffer =
         CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
     store_indices_.push_back(index);
   }
   template <typename T>
-  void AllocBuf(int index, RoBuf<T>&& arg) {
-#ifndef NDEBUG
+  void AllocBuf(int index, RwBuf<T> arg) {
     FUNC_INFO(index)
-#endif
-    cl::Buffer buffer =
-        CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
-    store_indices_.push_back(index);
-  }
-  template <typename T>
-  void AllocBuf(int index, RwBuf<T>& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
-    cl::Buffer buffer =
-        CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
-    load_indices_.push_back(index);
-    store_indices_.push_back(index);
-  }
-  template <typename T>
-  void AllocBuf(int index, RwBuf<T>&& arg) {
-#ifndef NDEBUG
-    FUNC_INFO(index)
-#endif
     cl::Buffer buffer =
         CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
     load_indices_.push_back(index);
     store_indices_.push_back(index);
   }
   void AllocBuf(int index, WriteStream& arg) {
-#ifndef NDEBUG
     FUNC_INFO(index)
-#endif
     auto pair = this->GetKernel(index);
     arg.Attach(device_, pair.second, pair.first);
   }
   void AllocBuf(int index, ReadStream& arg) {
-#ifndef NDEBUG
     FUNC_INFO(index)
-#endif
     auto pair = this->GetKernel(index);
     arg.Attach(device_, pair.second, pair.first);
   }
