@@ -107,7 +107,13 @@ void Stream::Attach(const cl::Device& device, const cl::Kernel& kernel,
 
 void ReadStream::Attach(const cl::Device& device, const cl::Kernel& kernel,
                         int index) {
-  Attach(device, kernel, index, CL_STREAM_READ_ONLY);
+  Attach(device, kernel, index,
+#ifdef XCL_STREAM_WRITE_ONLY
+         XCL_STREAM_WRITE_ONLY
+#else   // XCL_STREAM_WRITE_ONLY
+         CL_STREAM_READ_ONLY
+#endif  // XCL_STREAM_WRITE_ONLY
+  );
 }
 
 void ReadStream::ReadRaw(void* host_ptr, uint64_t size, bool eos) {
@@ -125,7 +131,13 @@ void ReadStream::ReadRaw(void* host_ptr, uint64_t size, bool eos) {
 }
 
 void WriteStream::Attach(cl::Device device, cl::Kernel kernel, int index) {
-  Attach(device, kernel, index, CL_STREAM_WRITE_ONLY);
+  Attach(device, kernel, index,
+#ifdef XCL_STREAM_READ_ONLY
+         XCL_STREAM_READ_ONLY
+#else   // XCL_STREAM_READ_ONLY
+         CL_STREAM_WRITE_ONLY
+#endif  // XCL_STREAM_READ_ONLY
+  );
 }
 
 void WriteStream::WriteRaw(const void* host_ptr, uint64_t size, bool eos) {
