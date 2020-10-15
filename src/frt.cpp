@@ -257,28 +257,6 @@ Instance::Instance(const string& bitstream) {
       } else {
         throw runtime_error("cannot determine kernel name from binary");
       }
-      unordered_map<int32_t, string> memory_table;
-      auto mem_info = xclbin::get_axlf_section(axlf_top, MEM_TOPOLOGY);
-      if (mem_info != nullptr) {
-        auto topology = reinterpret_cast<const mem_topology*>(
-            reinterpret_cast<const char*>(axlf_top) +
-            mem_info->m_sectionOffset);
-        for (int i = 0; i < topology->m_count; ++i) {
-          const mem_data& mem = topology->m_mem_data[i];
-          if (mem.m_used) {
-            memory_table[i] = reinterpret_cast<const char*>(mem.m_tag);
-          }
-        }
-      }
-      auto conn = xclbin::get_axlf_section(axlf_top, CONNECTIVITY);
-      if (conn != nullptr) {
-        auto connect = reinterpret_cast<const connectivity*>(
-            reinterpret_cast<const char*>(axlf_top) + conn->m_sectionOffset);
-        for (int i = 0; i < connect->m_count; ++i) {
-          const connection& c = connect->m_connection[i];
-          arg_table_[c.arg_index].tag = memory_table[c.mem_data_index];
-        }
-      }
     } else if (binary.size() >= SELFMAG &&
                memcmp(binary.data(), ELFMAG, SELFMAG) == 0) {
       this->vendor_ = Vendor::kIntel;
@@ -477,33 +455,6 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
   switch (this->vendor_) {
     case Vendor::kXilinx: {
       flags |= CL_MEM_USE_HOST_PTR;
-      if (arg_table_.count(index)) {
-        unordered_map<string, decltype(XCL_MEM_DDR_BANK0)> kTagTable{
-            {"bank0", XCL_MEM_DDR_BANK0},  {"bank1", XCL_MEM_DDR_BANK1},
-            {"bank2", XCL_MEM_DDR_BANK2},  {"bank3", XCL_MEM_DDR_BANK3},
-            {"DDR[0]", XCL_MEM_DDR_BANK0}, {"DDR[1]", XCL_MEM_DDR_BANK1},
-            {"DDR[2]", XCL_MEM_DDR_BANK2}, {"DDR[3]", XCL_MEM_DDR_BANK3},
-        };
-        for (int i = 0; i < 32; ++i) {
-          kTagTable["HBM[" + std::to_string(i) + "]"] = i | XCL_MEM_TOPOLOGY;
-        }
-        ext.flags = 0;
-        auto flag = kTagTable.find(arg_table_[index].tag);
-        if (flag != kTagTable.end()) {
-          ext.flags = flag->second;
-#ifndef NDEBUG
-          clog << "DEBUG: Argument " << index << " assigned to "
-               << arg_table_[index].tag << endl;
-#endif
-        } else if (!arg_table_[index].tag.empty()) {
-          clog << "WARNING: Unknown argument memory tag: "
-               << arg_table_[index].tag << endl;
-        }
-        ext.obj = host_ptr;
-        ext.param = nullptr;
-        flags |= CL_MEM_EXT_PTR_XILINX;
-        host_ptr = &ext;
-      }
       break;
     }
     case Vendor::kIntel: {
