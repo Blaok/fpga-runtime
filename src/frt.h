@@ -80,6 +80,10 @@ class ReadWriteBuffer : public internal::Buffer<T> {
   using internal::Buffer<T>::Buffer;
 };
 template <typename T>
+class PlaceholderBuffer : public internal::Buffer<T> {
+  using internal::Buffer<T>::Buffer;
+};
+template <typename T>
 ReadOnlyBuffer<T> ReadOnly(T* ptr, size_t n) {
   return ReadOnlyBuffer<T>(ptr, n);
 }
@@ -90,6 +94,10 @@ WriteOnlyBuffer<T> WriteOnly(T* ptr, size_t n) {
 template <typename T>
 ReadWriteBuffer<T> ReadWrite(T* ptr, size_t n) {
   return ReadWriteBuffer<T>(ptr, n);
+}
+template <typename T>
+PlaceholderBuffer<T> Placeholder(T* ptr, size_t n) {
+  return PlaceholderBuffer<T>(ptr, n);
 }
 
 class ReadStream : public internal::Stream {
@@ -240,6 +248,11 @@ class Instance {
     FUNC_INFO(index)
     this->SetArgInternal(index, buffer_table_[index]);
   }
+  template <typename T>
+  void SetArg(int index, PlaceholderBuffer<T> arg) {
+    FUNC_INFO(index)
+    this->SetArgInternal(index, buffer_table_[index]);
+  }
   void SetArg(int index, WriteStream& arg) { FUNC_INFO(index) }
   void SetArg(int index, ReadStream& arg) { FUNC_INFO(index) }
   template <typename T, typename... Args>
@@ -282,6 +295,11 @@ class Instance {
         CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
     load_indices_.push_back(index);
     store_indices_.push_back(index);
+  }
+  template <typename T>
+  void AllocBuf(int index, PlaceholderBuffer<T> arg) {
+    FUNC_INFO(index)
+    cl::Buffer buffer = CreateBuffer(index, 0, arg.SizeInBytes(), arg.Get());
   }
   void AllocBuf(int index, WriteStream& arg) {
     FUNC_INFO(index)
