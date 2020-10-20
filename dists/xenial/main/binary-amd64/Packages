@@ -149,6 +149,23 @@ Description: FPGA Runtime for PCIe-Based FPGAs
 
 Package: libfrt-dev
 Architecture: amd64
+Version: 0.0.20201019.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 315
+Depends: jq, libtinyxml-dev, opencl-headers
+Recommends: csh, xrt
+Filename: pool/main/xenial/libfrt-dev_0.0.20201019.1_amd64.deb
+Size: 90964
+MD5sum: cc4a55516db745d1790c7954c5ae754f
+SHA1: 5b60f262116128bfe7dae0d30a166c43309702d2
+SHA256: 6ff75d73b6029d86a65cc944b94f4cc2105184f4c296ebfa06534eca7cfda65c
+SHA512: f695f4f0f35eb2ddfdbd0daa7fbaaf2e976bbec30a5669e33c29073761a8f2c560c0165c58694d6d17ffa3595c38d589f504ac625e29f8f54dd16558b08f8bb3
+Description: FPGA Runtime for PCIe-Based FPGAs
+
+Package: libfrt-dev
+Architecture: amd64
 Version: 0.0.20200210.1
 Priority: optional
 Section: devel
