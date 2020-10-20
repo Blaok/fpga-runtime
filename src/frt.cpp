@@ -1,4 +1,4 @@
-﻿#define KEEP_CL_CHECK
+#define KEEP_CL_CHECK
 #include "frt.h"
 
 #include <cstring>
@@ -451,7 +451,6 @@ Instance::Instance(const string& bitstream) {
 
 cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
                                   void* host_ptr) {
-  cl_mem_ext_ptr_t ext;  // must in the same scope as host_ptr
   switch (this->vendor_) {
     case Vendor::kXilinx: {
       flags |= CL_MEM_USE_HOST_PTR;
