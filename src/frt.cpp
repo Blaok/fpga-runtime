@@ -80,8 +80,6 @@ cl::Program::Binaries LoadBinaryFile(const string& file_name) {
            std::istreambuf_iterator<char>()}};
 }
 
-}  // namespace internal
-
 Stream::~Stream() {
   if (stream_ != nullptr) {
     CL_CHECK(clReleaseStream(stream_));
@@ -104,6 +102,8 @@ void Stream::Attach(const cl::Device& device, const cl::Kernel& kernel,
   stream_ = clCreateStream(device.get(), flags, CL_STREAM, &ext, &err);
   CL_CHECK(err);
 }
+
+}  // namespace internal
 
 void ReadStream::Attach(const cl::Device& device, const cl::Kernel& kernel,
                         int index) {

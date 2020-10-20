@@ -23,21 +23,18 @@ struct _cl_stream;
 }  // extern "C"
 
 namespace fpga {
+namespace internal {
 
-#define CL_CHECK(err) ClCheck((err), __FILE__, __LINE__);
+#ifdef KEEP_CL_CHECK
+#define CL_CHECK(err) ::fpga::internal::ClCheck((err), __FILE__, __LINE__);
+#endif  // KEEP_CL_CHECK
+
 inline void ClCheck(cl_int err, const char* file, int line) {
   if (err != CL_SUCCESS) {
     throw std::runtime_error(std::string(file) + ":" + std::to_string(line) +
                              ": " + ToString(err));
   }
 }
-#ifdef NDEBUG
-#define FUNC_INFO(index)
-#else  // NDEBUG
-#define FUNC_INFO(index)                                  \
-  std::clog << "DEBUG: Function ‘" << __PRETTY_FUNCTION__ \
-            << "’ called with index = " << (index) << std::endl;
-#endif  // NDEBUG
 
 template <typename T>
 class Buffer {
@@ -52,31 +49,6 @@ class Buffer {
   T* Get() const { return ptr_; }
   size_t SizeInBytes() const { return n_ * sizeof(T); }
 };
-template <typename T>
-class RoBuf : public Buffer<T> {
-  using Buffer<T>::Buffer;
-};
-template <typename T>
-class WoBuf : public Buffer<T> {
-  using Buffer<T>::Buffer;
-};
-template <typename T>
-class RwBuf : public Buffer<T> {
-  using Buffer<T>::Buffer;
-};
-
-template <typename T>
-RoBuf<T> ReadOnly(T* ptr, size_t n) {
-  return RoBuf<T>(ptr, n);
-}
-template <typename T>
-WoBuf<T> WriteOnly(T* ptr, size_t n) {
-  return WoBuf<T>(ptr, n);
-}
-template <typename T>
-RwBuf<T> ReadWrite(T* ptr, size_t n) {
-  return RwBuf<T>(ptr, n);
-}
 
 class Stream {
  protected:
@@ -93,10 +65,37 @@ class Stream {
               /* cl_stream_flags */ uint64_t flags);
 };
 
-class ReadStream : public Stream {
+}  // namespace internal
+
+template <typename T>
+class ReadOnlyBuffer : public internal::Buffer<T> {
+  using internal::Buffer<T>::Buffer;
+};
+template <typename T>
+class WriteOnlyBuffer : public internal::Buffer<T> {
+  using internal::Buffer<T>::Buffer;
+};
+template <typename T>
+class ReadWriteBuffer : public internal::Buffer<T> {
+  using internal::Buffer<T>::Buffer;
+};
+template <typename T>
+ReadOnlyBuffer<T> ReadOnly(T* ptr, size_t n) {
+  return ReadOnlyBuffer<T>(ptr, n);
+}
+template <typename T>
+WriteOnlyBuffer<T> WriteOnly(T* ptr, size_t n) {
+  return WriteOnlyBuffer<T>(ptr, n);
+}
+template <typename T>
+ReadWriteBuffer<T> ReadWrite(T* ptr, size_t n) {
+  return ReadWriteBuffer<T>(ptr, n);
+}
+
+class ReadStream : public internal::Stream {
  public:
-  using Stream::Attach;
-  ReadStream(const std::string& name) : Stream(name) {}
+  using internal::Stream::Attach;
+  ReadStream(const std::string& name) : internal::Stream(name) {}
   ReadStream(const ReadStream&) = delete;
 
   void Attach(const cl::Device& device, const cl::Kernel& kernel, int index);
@@ -110,10 +109,10 @@ class ReadStream : public Stream {
   void ReadRaw(void* host_ptr, uint64_t size, bool eos);
 };
 
-class WriteStream : public Stream {
+class WriteStream : public internal::Stream {
  public:
-  using Stream::Attach;
-  WriteStream(const std::string& name) : Stream(name) {}
+  using internal::Stream::Attach;
+  WriteStream(const std::string& name) : internal::Stream(name) {}
   WriteStream(const WriteStream&) = delete;
 
   void Attach(cl::Device device, cl::Kernel kernel, int index);
@@ -212,6 +211,14 @@ class Instance {
     return args;
   }
 
+#ifdef NDEBUG
+#define FUNC_INFO(index)
+#else  // NDEBUG
+#define FUNC_INFO(index)                                  \
+  std::clog << "DEBUG: Function ‘" << __PRETTY_FUNCTION__ \
+            << "’ called with index = " << (index) << std::endl;
+#endif  // NDEBUG
+
   // SetArg
   template <typename T>
   void SetArg(int index, T&& arg) {
@@ -219,17 +226,17 @@ class Instance {
     this->SetArgInternal(index, arg);
   }
   template <typename T>
-  void SetArg(int index, RoBuf<T> arg) {
+  void SetArg(int index, ReadOnlyBuffer<T> arg) {
     FUNC_INFO(index)
     this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
-  void SetArg(int index, WoBuf<T> arg) {
+  void SetArg(int index, WriteOnlyBuffer<T> arg) {
     FUNC_INFO(index)
     this->SetArgInternal(index, buffer_table_[index]);
   }
   template <typename T>
-  void SetArg(int index, RwBuf<T> arg) {
+  void SetArg(int index, ReadWriteBuffer<T> arg) {
     FUNC_INFO(index)
     this->SetArgInternal(index, buffer_table_[index]);
   }
@@ -254,7 +261,7 @@ class Instance {
     FUNC_INFO(index)
   }
   template <typename T>
-  void AllocBuf(int index, WoBuf<T> arg) {
+  void AllocBuf(int index, WriteOnlyBuffer<T> arg) {
     FUNC_INFO(index)
     cl::Buffer buffer = CreateBuffer(
         index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
@@ -262,14 +269,14 @@ class Instance {
     load_indices_.push_back(index);
   }
   template <typename T>
-  void AllocBuf(int index, RoBuf<T> arg) {
+  void AllocBuf(int index, ReadOnlyBuffer<T> arg) {
     FUNC_INFO(index)
     cl::Buffer buffer =
         CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
     store_indices_.push_back(index);
   }
   template <typename T>
-  void AllocBuf(int index, RwBuf<T> arg) {
+  void AllocBuf(int index, ReadWriteBuffer<T> arg) {
     FUNC_INFO(index)
     cl::Buffer buffer =
         CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
@@ -296,6 +303,7 @@ class Instance {
   void AllocBuf(Args&&... args) {
     AllocBuf(0, std::forward<Args>(args)...);
   }
+#undef FUNC_INFO
 
   void WriteToDevice();
   void ReadFromDevice();
@@ -312,7 +320,7 @@ class Instance {
     bool has_stream = false;
     bool dummy[sizeof...(Args)]{(
         has_stream |=
-        std::is_base_of<Stream,
+        std::is_base_of<internal::Stream,
                         typename std::remove_reference<Args>::type>::value)...};
     if (!has_stream) {
 #ifndef NDEBUG
@@ -338,11 +346,6 @@ template <typename... Args>
 Instance Invoke(const std::string& bitstream, Args&&... args) {
   return Instance(bitstream).Invoke(std::forward<Args>(args)...);
 }
-
-#undef FUNC_INFO
-#ifndef KEEP_CL_CHECK
-#undef CL_CHECK
-#endif  // KEEP_CL_CHECK
 
 }  // namespace fpga
 
