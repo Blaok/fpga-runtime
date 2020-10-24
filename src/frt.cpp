@@ -19,6 +19,12 @@
 #include <CL/cl_ext_xilinx.h>
 #include <xclbin.h>
 
+// Link against libxilinxopencl only if necessary.
+#pragma weak clCreateStream
+#pragma weak clReadStream
+#pragma weak clReleaseStream
+#pragma weak clWriteStream
+
 using std::clog;
 using std::endl;
 using std::runtime_error;
