@@ -36,6 +36,6 @@ else
 fi
 
 XILINX_XRT=/opt/xilinx/xrt
-echo "::set-env name=XILINX_XRT::${XILINX_XRT}"
-echo "::set-env name=LD_LIBRARY_PATH::${XILINX_XRT}/lib"
-echo "::add-path::${XILINX_XRT}/bin"
+echo "XILINX_XRT=${XILINX_XRT}" >>$GITHUB_ENV
+echo "LD_LIBRARY_PATH=${XILINX_XRT}/lib" >>$GITHUB_ENV
+echo "${XILINX_XRT}/bin" >>$GITHUB_PATH
