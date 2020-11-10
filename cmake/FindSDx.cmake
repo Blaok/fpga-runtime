@@ -59,23 +59,18 @@ function(add_xocc_compile_target target_name)
   get_target_property(dram_mapping ${input} DRAM_MAPPING)
   get_target_property(input_file ${input} FILE_NAME)
   get_filename_component(output ${output} ABSOLUTE)
-  get_filename_component(temp_dir ${temp_dir} ABSOLUTE)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
-  set(cwd /tmp/cmake.xocc.$ENV{USER})
-  file(MAKE_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR})
-
   # compose the xocc compile command
-  set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
-  list(APPEND xocc_cmd ${XOCC} --compile)
-  list(APPEND xocc_cmd --output ${cwd}${output})
+  set(xocc_cmd ${XOCC} --compile)
+  list(APPEND xocc_cmd --output ${output})
   list(APPEND xocc_cmd --kernel ${kernel})
   list(APPEND xocc_cmd --platform ${platform})
   list(APPEND xocc_cmd --target ${target})
   list(APPEND xocc_cmd --report_level 2)
   list(APPEND xocc_cmd --report_dir ${report_dir})
   list(APPEND xocc_cmd --log_dir ${log_dir})
-  list(APPEND xocc_cmd --temp_dir ${cwd}${temp_dir})
+  list(APPEND xocc_cmd --temp_dir ${temp_dir})
   list(APPEND xocc_cmd --xp prop:kernel.${kernel}.kernel_flags=-std=c++11)
   if(CMAKE_BUILD_TYPE MATCHES Debug)
     list(APPEND xocc_cmd --debug)
@@ -85,13 +80,15 @@ function(add_xocc_compile_target target_name)
   endif()
   list(APPEND xocc_cmd ${input_file})
   list(APPEND xocc_cmd ${XOCC_COMPILE_UNPARSED_ARGUMENTS})
-  list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
-  list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
+  list(APPEND xocc_cmd "&&;test;${output};-nt;${input_file}")
+
+  set(cwd /tmp/cmake.xocc.compile.$ENV{USER})
+  file(MAKE_DIRECTORY ${cwd})
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
                      DEPENDS ${input} ${input_file}
-                     WORKING_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR}
+                     WORKING_DIRECTORY ${cwd}
                      VERBATIM)
 
   add_custom_target(${target_name} DEPENDS ${output})
@@ -159,23 +156,18 @@ function(add_xocc_link_target target_name)
   get_target_property(dram_mapping ${input} DRAM_MAPPING)
   get_target_property(input_file ${input} FILE_NAME)
   get_filename_component(output ${output} ABSOLUTE)
-  get_filename_component(temp_dir ${temp_dir} ABSOLUTE)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
-  set(cwd /tmp/cmake.xocc.$ENV{USER})
-  file(MAKE_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR})
-
   # compose the xocc link command
-  set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
-  list(APPEND xocc_cmd env LC_ALL=C ${XOCC} --link)
-  list(APPEND xocc_cmd --output ${cwd}${output})
+  set(xocc_cmd ${XOCC} --link)
+  list(APPEND xocc_cmd --output ${output})
   list(APPEND xocc_cmd --kernel ${kernel})
   list(APPEND xocc_cmd --platform ${platform})
   list(APPEND xocc_cmd --target ${target})
   list(APPEND xocc_cmd --report_level 2)
   list(APPEND xocc_cmd --report_dir ${report_dir})
   list(APPEND xocc_cmd --log_dir ${log_dir})
-  list(APPEND xocc_cmd --temp_dir ${cwd}${temp_dir})
+  list(APPEND xocc_cmd --temp_dir ${temp_dir})
   list(APPEND xocc_cmd --optimize ${optimize})
   list(APPEND xocc_cmd --nk ${kernel}:1:${kernel})
   list(APPEND xocc_cmd --max_memory_ports ${kernel})
@@ -190,14 +182,15 @@ function(add_xocc_link_target target_name)
   endif()
   list(APPEND xocc_cmd ${input_file})
   list(APPEND xocc_cmd ${XOCC_LINK_UNPARSED_ARGUMENTS})
-  list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
-  list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
+  list(APPEND xocc_cmd "&&;test;${output};-nt;${input_file}")
 
+  set(cwd /tmp/cmake.xocc.link.$ENV{USER})
+  file(MAKE_DIRECTORY ${cwd})
 
   add_custom_command(OUTPUT ${output}
-                     COMMAND ${xocc_cmd}
+                     COMMAND env LC_ALL=C ${xocc_cmd}
                      DEPENDS ${input} ${input_file}
-                     WORKING_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR}
+                     WORKING_DIRECTORY ${cwd}
                      VERBATIM)
 
   add_custom_target(${target_name} DEPENDS ${output})
