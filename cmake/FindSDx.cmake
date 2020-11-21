@@ -87,6 +87,7 @@ function(add_xocc_compile_target target_name)
   list(APPEND xocc_cmd ${XOCC_COMPILE_UNPARSED_ARGUMENTS})
   list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
   list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
+  list(APPEND xocc_cmd "&&;tar;czf;${temp_dir}.tgz;${cwd}${temp_dir};--backup")
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
@@ -192,6 +193,7 @@ function(add_xocc_link_target target_name)
   list(APPEND xocc_cmd ${XOCC_LINK_UNPARSED_ARGUMENTS})
   list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
   list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
+  list(APPEND xocc_cmd "&&;tar;czf;${temp_dir}.tgz;${cwd}${temp_dir};--backup")
 
 
   add_custom_command(OUTPUT ${output}
