@@ -4,47 +4,47 @@ Hash: SHA1
 Architectures: amd64
 Codename: xenial
 Components: main
-Date: Sat, 21 Nov 2020 22:11:31 UTC
+Date: Mon, 07 Dec 2020 23:49:46 UTC
 Label: FPGA Runtime Repository
 MD5Sum:
- 69196366e591888d1998e2fd8da05648              122 Release
+ a2544e926a05409d7450a05aa71d2077              122 Release
  3801e4f3826fb762e78e4367f44bb7b7              475 main/Contents-amd64
- 11e6f9c78dd98063e2ee24b2931a3016              163 main/Contents-amd64.gz
- 83cb9dbe690a0764f9cbf5176de19aa1             8400 main/binary-amd64/Packages
- ec3edb1b209391729a3048e191e56728             2643 main/binary-amd64/Packages.gz
- 622d072ed93af5423552ded1f3c02221             1202 main/binary-amd64/Release
+ f9de96e46a402dcf410f1b266ca11b9d              163 main/Contents-amd64.gz
+ 5a4654a09f40a6eb8426f29191737736             9026 main/binary-amd64/Packages
+ 278f59234cda2dc88541f779f574044a             2828 main/binary-amd64/Packages.gz
+ fd079a710d3f9bf89933979e944c52ed             1202 main/binary-amd64/Release
 SHA1:
- 22d8db85c64efb2ed1004fa6e099b6189b6bfbac              122 Release
+ 7b8b61b637042e0274f17ba96ed334a15ed1dc1b              122 Release
  a679f823bb4271152eb1f15de4f040d9326d2833              475 main/Contents-amd64
- 9db7945bc79de87ccf321f4410790d4b9c75308b              163 main/Contents-amd64.gz
- b12da5b7efa69e722f45a5dc723b2f6ac4170acb             8400 main/binary-amd64/Packages
- cab8ed4f07c309f7cb254d288a8cd16f7330bc47             2643 main/binary-amd64/Packages.gz
- d7211423b471548d8e205c2a4bac43cdba2271f0             1202 main/binary-amd64/Release
+ 14b188b0f601623bb7bb2f2e23db4790ba785ab9              163 main/Contents-amd64.gz
+ 172970498d0ebcc53d1b02f0dbce5cc708e60c80             9026 main/binary-amd64/Packages
+ 782c0b8b58bcb749b3a6a9055a4a81d7d1d6f2e5             2828 main/binary-amd64/Packages.gz
+ ebdddd76ac0b30426119a7c128c50d9995f926b4             1202 main/binary-amd64/Release
 SHA256:
- 71f6076d9470339a3df7fd9023d10073d6d0e1f7c9963f66cfa4ec8711f4a3a5              122 Release
+ a79802c07996aded69349847bf30cd430434801e123ac3cece1396b74ccaf1b8              122 Release
  aa8b224f0e3740136ffd753015af5ca477a4646920b527493fb8869862eac4f6              475 main/Contents-amd64
- a7168237976e4040b00e43d3330d2b4e9343f4c6e408d413998ed379721ea13b              163 main/Contents-amd64.gz
- 6462027617f8f3d5d55e190795e3eb11b0905e344164636d9edf90dc5e238adf             8400 main/binary-amd64/Packages
- e5089b1385f27faf6a8fd15a52f8cc5966169e8d8d6fc28309396085751d239c             2643 main/binary-amd64/Packages.gz
- 038135ed654df4448398e48b3aba6a74e632be9f5b8fa270d3a216c695ccc26d             1202 main/binary-amd64/Release
+ 41f4d7fcba44ba3dc650427f3ce0e23893e56da1f274132ccac2d22a8869f63b              163 main/Contents-amd64.gz
+ e72b03fa9ff15e4e248fc781ba462b015d419114c7717c29642abcd4d16a0658             9026 main/binary-amd64/Packages
+ 943f7ca27a41c2cff6cd352f6eeea6a3516ad8710c5ec6df9cb71fc44f07fdbe             2828 main/binary-amd64/Packages.gz
+ 873b02fb21ab2e56a0b9dc1dcef43a31b7f83d2c528d49a138954ad2852739ac             1202 main/binary-amd64/Release
 SHA512:
- 972194e5edaf0716ddcddc5d52c53cb2e6e9dd2899ec2c3f0c279e90c5d622e6b22847dab4c1328d7f3cdd6cedc1005482e1aecaeffd6a46ac595e2901c8c797              122 Release
+ 902088aa015f403d47fcf5df9ae6b6c2f4a6fffe086f62888b7907beabd3a9f5132643fceeef46e214a0fa8b45f744c506236bc84111911b603794aa764bc612              122 Release
  2b98ad78b6a0ec1efb422374222597852af34d4748974febe6042e169fda239947230ff9ec28a510e98568272191259fb66e8a682fae7227f7b34f55122fbdfb              475 main/Contents-amd64
- 375b1bf42fef3be8fde4396857616b2b49f143e3f3de8ad6f70136566725f1cc773ac77164902dab5c031e6a2c4cc8075037484f312d4ff72545675177305f2b              163 main/Contents-amd64.gz
- 00c68271be13dfbbc1547aec62246174f18f8108ef93f71a167755b29bc1f740927d258ecca0a26a59e18be67e7cf295d533219aea6690911b3a53a9f3db9176             8400 main/binary-amd64/Packages
- fa881c49ec47b4f7744bc5895a0cfd8512dfa756cc8ea1d6f225f458d178119292abca40a7fa90ce6ff92afb9c1d0866675f78044504923e5ee075792f228ef1             2643 main/binary-amd64/Packages.gz
- 74c717c0171a4e50ad7e8c945e90298469dbc1d00517f6702e6eee18298b6824ef98187b8e95a8b3d52a4e3eb03e0b737d836aa410d4fc58eb3995a9f89e13f9             1202 main/binary-amd64/Release
+ a75d9f6ef9627514461f77e87f02889e076d753fc1a71cbdf7651a69298565c7862ff7a36a4152779ec014f092fc1334602517d323a711912f3ed4f47b57fbcd              163 main/Contents-amd64.gz
+ d68de1cb21fd21eb418597f12f980b6352b0091d762ba3ccca76020459573593ee4991c0413f501775fca59a52164cf1efde5392883c7c3219a63c1b446167bd             9026 main/binary-amd64/Packages
+ a83b3bfe56dcc8b38d813fae90cf22d608e92467bd52a8bec399451de3a52376b03f7cd43effa76f12f3f0c1cfb3dae6eb162247c76185d649061e129093837f             2828 main/binary-amd64/Packages.gz
+ 233fcf4eb40c8a93d81aba5f8cdb5f80961b07c9d556ad6679b94578213f658d22f9f4cd9285aa485af8b9de33dee6785dda6cda8dd4352cc8f634f8db239d7d             1202 main/binary-amd64/Release
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQGcBAEBAgAGBQJfuZCTAAoJEKPbiyRjazPu47wMAJrVNx5ctbQDwZOfPtBbb463
-0qD/pqzelzEJxlIin9Nr6sNoY9Wnnf6VyKXOVrdEzOCZRyRetYs6TZmFqTLX5G3f
-mYqY1RDbhh8IlCEeJygszkdG38dSxfkQEqF5ZxvRK/u+7QqMKm57XG69KlHNG5/Y
-87tmZPaL5VAmdKpRv612ouqSARblsnSkzIFyUSt2p2q7A8y9HhxY36CQWiwvNgzB
-Z9/TrIewRsoBgbFjcVFYFF+Yt6rqhutbX7c8F+7EIXpQ9GOzhxIEkyUcf+bvYq3t
-/1MTg9xAMS9nrwLLea+X82nU4q+PoAVGHC+kfEgz0GMeR3NKxjClOF8lWu2QrWTO
-h2bsdWVOMpBnPCscQSJCGYi4N92Y9S9tiJlN/PTCaEYmEUjRDRIynfryA7NTkc5B
-dtMcUmircx8RD+bkYIpzNoPfzsqR1voBjcM4ug0b+78QP8prbGOWwodMMO3LGaVH
-5RNv9UkllKgS+e//KnzDbGyVYbC7QehaAON25Wy0rg==
-=F9O2
+iQGcBAEBAgAGBQJfzr+aAAoJEKPbiyRjazPu/AgL/RgoK3edo90aWf7SUZocYqG1
+cXQJ/pv2C2erHP5LwldohOOpFC4w9yZI1A0ebDsqThZ5U2Hb6aYRezj5f5adlJch
+nY7He4D2kKIDQpWCJLZToOjNKs8JBJxJsbphiz0uEZ630+THzIhrUjf9EVHDB43a
+Bh3+d7FjsHx16Jq2xs57bW03ON53N+lZcC4+MJyx0m/v0jam8nXZOQ+u5XT69jGp
+5/u0NBqYTSgkkIqxyrTtQFL9xSBdfmbkb4+c8C3DMh1rDjpHKfsFEgO0OJb4wryc
+hWMfivHJRQljdBOJ3sfwOTLrirwpV4nsp9UwWSZh55wFDFFzgb+26v1VQ/rnZQvz
+fT5ejG4enljH9EiKj7ako9hwdeBpnzieBMP9Ywjsk4ngV06G4npaeAHB12KG0b6N
+V1GNNVlIBMlPaKc3nIbHJAWCqzmekWKiCuLupb0qe19FtGSGu04c3uo8Adu8Tqbb
+uTP31Vm2q6UE6h/Hf3ADPqjxQT5uKm3Fg1CIU0fIlA==
+=BRa8
 -----END PGP SIGNATURE-----
