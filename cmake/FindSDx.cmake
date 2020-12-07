@@ -88,13 +88,13 @@ function(add_xocc_compile_target target_name)
   list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
   list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
   list(APPEND xocc_cmd && tar
-    --directory ${cwd}
+    --directory ${cwd}${temp_dir}
     --create
     --gzip
     --backup
     --remove-files
     --file ${temp_dir}.tgz
-    .${temp_dir})
+    .)
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
@@ -201,13 +201,13 @@ function(add_xocc_link_target target_name)
   list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
   list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
   list(APPEND xocc_cmd && tar
-    --directory ${cwd}
+    --directory ${cwd}${temp_dir}
     --create
     --gzip
     --backup
     --remove-files
     --file ${temp_dir}.tgz
-    .${temp_dir})
+    .)
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
