@@ -36,5 +36,6 @@ fi
 
 XILINX_XRT=/opt/xilinx/xrt
 echo "XILINX_XRT=${XILINX_XRT}" >>$GITHUB_ENV
+echo "CPATH=${XILINX_XRT}/include" >>$GITHUB_ENV
 echo "LD_LIBRARY_PATH=${XILINX_XRT}/lib" >>$GITHUB_ENV
 echo "${XILINX_XRT}/bin" >>$GITHUB_PATH
