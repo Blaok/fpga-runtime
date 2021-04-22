@@ -63,10 +63,11 @@ function(add_xocc_compile_target target_name)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
   set(cwd /tmp/cmake.xocc.$ENV{USER})
-  file(MAKE_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR})
 
   # compose the xocc compile command
   set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
+  list(APPEND xocc_cmd "mkdir;-p;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
+  list(APPEND xocc_cmd "cd;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
   list(APPEND xocc_cmd ${XOCC} --compile)
   list(APPEND xocc_cmd --output ${cwd}${output})
   list(APPEND xocc_cmd --kernel ${kernel})
@@ -99,7 +100,6 @@ function(add_xocc_compile_target target_name)
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
                      DEPENDS ${input} ${input_file}
-                     WORKING_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR}
                      VERBATIM)
 
   add_custom_target(${target_name} DEPENDS ${output})
@@ -171,10 +171,11 @@ function(add_xocc_link_target target_name)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
   set(cwd /tmp/cmake.xocc.$ENV{USER})
-  file(MAKE_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR})
 
   # compose the xocc link command
   set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
+  list(APPEND xocc_cmd "mkdir;-p;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
+  list(APPEND xocc_cmd "cd;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
   list(APPEND xocc_cmd env LC_ALL=C ${XOCC} --link)
   list(APPEND xocc_cmd --output ${cwd}${output})
   list(APPEND xocc_cmd --kernel ${kernel})
@@ -212,7 +213,6 @@ function(add_xocc_link_target target_name)
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
                      DEPENDS ${input} ${input_file}
-                     WORKING_DIRECTORY ${cwd}${CMAKE_CURRENT_BINARY_DIR}
                      VERBATIM)
 
   add_custom_target(${target_name} DEPENDS ${output})
