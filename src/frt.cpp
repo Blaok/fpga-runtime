@@ -407,7 +407,11 @@ Instance::Instance(const string& bitstream) {
         bool is_target_device = false;
         switch (this->vendor_) {
           case Vendor::kXilinx: {
-            is_target_device = device_name == target_device_name;
+            is_target_device =
+                (target_device_name ==
+                     "xilinx_u250_gen3x16_xdma_3_1_202020_1" &&
+                 device_name == "xilinx_u250_gen3x16_xdma_shell_3_1") ||
+                device_name == target_device_name;
             break;
           }
           case Vendor::kIntel: {
