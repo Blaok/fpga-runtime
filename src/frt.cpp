@@ -30,7 +30,6 @@ using std::endl;
 using std::runtime_error;
 using std::string;
 using std::unique_ptr;
-using std::unordered_map;
 using std::vector;
 
 namespace fpga {
