@@ -443,6 +443,7 @@ Instance::Instance(const string& bitstream) {
             CL_CHECK(status);
           }
           CL_CHECK(err);
+          CL_CHECK(program_.build());
           for (int i = 0; i < kernel_names.size(); ++i) {
             this->kernels_[kernel_arg_counts[i]] =
                 cl::Kernel(program_, kernel_names[i].c_str(), &err);
