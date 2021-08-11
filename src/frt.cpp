@@ -1,6 +1,8 @@
 #define KEEP_CL_CHECK
 #include "frt.h"
 
+#include <cerrno>
+#include <cstdio>
 #include <cstring>
 
 #include <fstream>
@@ -12,6 +14,8 @@
 #include <vector>
 
 #include <elf.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <tinyxml.h>
 #include <CL/cl2.hpp>
@@ -342,17 +346,45 @@ Instance::Instance(const string& bitstream) {
     }
   }
   if (getenv("XCL_EMULATION_MODE")) {
+    const char* tmpdir_or_null = getenv("TMPDIR");
+    string tmpdir = tmpdir_or_null ? tmpdir_or_null : "/tmp";
+    tmpdir += "/.frt.";
+    tmpdir += cuserid(nullptr);
+    if (mkdir(tmpdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) && errno != EEXIST) {
+      throw runtime_error(string("cannot create tmpdir ") + tmpdir + ": " +
+                          strerror(errno));
+    }
+
+    // If SDACCEL_EM_RUN_DIR is not set, use a per-use tmpdir for `.run`.
+    setenv("SDACCEL_EM_RUN_DIR", tmpdir.c_str(), 0);
+
+    // If EMCONFIG_PATH is not set, use a per-user and per-device tmpdir to
+    // cache `emconfig.json`.
+    const char* emconfig_dir_or_null = getenv("EMCONFIG_PATH");
+    string emconfig_dir;
+    if (emconfig_dir_or_null == nullptr) {
+      emconfig_dir = tmpdir;
+      emconfig_dir += "/emconfig.";
+      emconfig_dir += target_device_name;
+      setenv("EMCONFIG_PATH", emconfig_dir.c_str(), 0);
+    } else {
+      emconfig_dir = emconfig_dir_or_null;
+    }
+
+    // Generate `emconfig.json` when necessary.
     string cmd =
-        R"([ "$(jq -r '.Platform.Boards[]|select(.Devices[]|select(.Name==")" +
-        target_device_name +
-        R"R("))' emconfig.json 2>/dev/null)" != "" ] || )R"
-        "emconfigutil --platform " +
-        target_device_name;
+        "jq --exit-status "
+        "'.Platform.Boards[]|select(.Devices[]|select(.Name==\"";
+    cmd += target_device_name;
+    cmd += "\"))' ";
+    cmd += emconfig_dir;
+    cmd += "/emconfig.json >/dev/null 2>&1 || emconfigutil --platform ";
+    cmd += target_device_name;
+    cmd += " --od ";
+    cmd += emconfig_dir;
     if (system(cmd.c_str())) {
       throw std::runtime_error("emconfigutil failed");
     }
-    const char* tmpdir = getenv("TMPDIR");
-    setenv("SDACCEL_EM_RUN_DIR", tmpdir ? tmpdir : "/tmp", 0);
   }
 
   const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE");
