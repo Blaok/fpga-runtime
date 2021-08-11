@@ -415,7 +415,8 @@ Instance::Instance(const string& bitstream) {
           }
           case Vendor::kIntel: {
             string prefix = target_device_name + " : ";
-            is_target_device = device_name.substr(0, prefix.size()) == prefix;
+            is_target_device = device_name == target_device_name ||
+                               device_name.substr(0, prefix.size()) == prefix;
             break;
           }
           default:
