@@ -91,10 +91,10 @@ function(add_xocc_compile_target target_name)
   list(APPEND xocc_cmd && tar
     --directory ${cwd}${temp_dir}
     --create
-    --gzip
+    --use-compress-program=zstd
     --backup
     --remove-files
-    --file ${temp_dir}.tgz
+    --file ${temp_dir}.tar.zst
     .)
 
   add_custom_command(OUTPUT ${output}
@@ -204,10 +204,10 @@ function(add_xocc_link_target target_name)
   list(APPEND xocc_cmd && tar
     --directory ${cwd}${temp_dir}
     --create
-    --gzip
+    --use-compress-program=zstd
     --backup
     --remove-files
-    --file ${temp_dir}.tgz
+    --file ${temp_dir}.tar.zst
     .)
 
   add_custom_command(OUTPUT ${output}
