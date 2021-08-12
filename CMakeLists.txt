@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0076 NEW)
 
-find_program(CLANG_TIDY clang-tidy)
-if(CLANG_TIDY)
-  set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY})
-endif()
-
 project(frt)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
