@@ -1,5 +1,68 @@
 Package: libfrt-dev
 Architecture: amd64
+Version: 0.0.20200414.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 334
+Depends: jq, libtinyxml-dev, opencl-headers, xrt
+Recommends: csh
+Filename: pool/main/xenial/libfrt-dev_0.0.20200414.1_amd64.deb
+Size: 94210
+MD5sum: 3941d46a82007b8fe04231f17709d353
+SHA1: 84475c6154972d39f7cea35519eeec8380fb4ed7
+SHA256: 677a438af9e582b3c7bb2d48e0816bb5a8efa0a02b09b63fc8cad6f355990806
+SHA512: c62bf2bf4bc09f4fde6a1d05c7de5735eea261a490bcecfac91979c4cb6acb4c3fee84c749c30c44eb4519659f99f397490709964485ec76562017a638135aee
+Description: FPGA Runtime for PCIe-Based FPGAs
+ DESCRIPTION
+ ===========
+ .
+ This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
+ .
+ .
+
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20200211.2
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 288
+Depends: jq, libtinyxml-dev, opencl-headers, xrt
+Recommends: csh
+Filename: pool/main/xenial/libfrt-dev_0.0.20200211.2_amd64.deb
+Size: 76714
+MD5sum: 04b38bc3fc1b09ed3f64986925aa757a
+SHA1: 84cc22d5505ef3fe1d9e63f14f7176ab8e713039
+SHA256: c6426764b49bd4b2dc70906efe555f554f635000c85eb892a0c1c4655431d708
+SHA512: 65a9631574e5832bbde9ca6730d58aef69defbe61748700e304068c8554a6704ce9a8b505d681a8a6589348631ce8599ec339c5d651709fc4d236d321dcf5dcb
+Description: FPGA Runtime for PCIe-Based FPGAs
+ DESCRIPTION
+ ===========
+ .
+ This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
+ .
+ .
+
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20210421.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 315
+Depends: jq, libtinyxml-dev, ocl-icd-opencl-dev, opencl-headers
+Recommends: csh, xrt
+Filename: pool/main/xenial/libfrt-dev_0.0.20210421.1_amd64.deb
+Size: 91018
+MD5sum: 6283eb1644f9997248a64d2e7d4fbbda
+SHA1: 586cb380e1141a596b150454cbd2a7b0930bff77
+SHA256: 796322dd8ab6547a247ef093eec5b7f90e13303f9fce12036a63dbab9aa3c67a
+SHA512: d35f113bccb4cb5998c33259a6a854d79ae0c77092708c4d677e18936ac2218e1ec138eb92c30751c6c1b0de53447029fee7de7f7d09baaed9b1be43e910a16f
+Description: FPGA Runtime for PCIe-Based FPGAs
+
+Package: libfrt-dev
+Architecture: amd64
 Version: 0.0.20201121.1
 Priority: optional
 Section: devel
@@ -17,53 +80,53 @@ Description: FPGA Runtime for PCIe-Based FPGAs
 
 Package: libfrt-dev
 Architecture: amd64
-Version: 0.0.20201019.1
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 315
-Depends: jq, libtinyxml-dev, opencl-headers
-Recommends: csh, xrt
-Filename: pool/main/xenial/libfrt-dev_0.0.20201019.1_amd64.deb
-Size: 90964
-MD5sum: cc4a55516db745d1790c7954c5ae754f
-SHA1: 5b60f262116128bfe7dae0d30a166c43309702d2
-SHA256: 6ff75d73b6029d86a65cc944b94f4cc2105184f4c296ebfa06534eca7cfda65c
-SHA512: f695f4f0f35eb2ddfdbd0daa7fbaaf2e976bbec30a5669e33c29073761a8f2c560c0165c58694d6d17ffa3595c38d589f504ac625e29f8f54dd16558b08f8bb3
-Description: FPGA Runtime for PCIe-Based FPGAs
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20201109.1
+Version: 0.0.20201014.1
 Priority: optional
 Section: devel
 Maintainer: Blaok Chi
 Installed-Size: 314
 Depends: jq, libtinyxml-dev, opencl-headers
 Recommends: csh, xrt
-Filename: pool/main/xenial/libfrt-dev_0.0.20201109.1_amd64.deb
-Size: 90900
-MD5sum: 9430bb21370a1b1811ebb6bb427409d0
-SHA1: 0d12a70ff582ecfcbb99e273d8a49245e135fd4e
-SHA256: 8a5e5e9ef5a175b461017a8d6d8da0d1e8bdd5e3be9f1eb3f21eb7e2358b0bc9
-SHA512: cb508a0880ae27fd86ced69a0cbb201ecc089b3ea80785b787088e6769624ea3a14d925a85c4ea280b058aa49b8f6c335b7685852b2b2b7dc1c912e83f797176
+Filename: pool/main/xenial/libfrt-dev_0.0.20201014.1_amd64.deb
+Size: 90874
+MD5sum: de16e963566e00a6fb00172a2f7d3ed1
+SHA1: 023644525c1c82b04dd085c4aa4210fc1489b3dc
+SHA256: 99245275bd0b5bc5e54bcaf5753cb28cf958ddff0fcd54649af20255c6991ffd
+SHA512: 1db4c8b4cdc9432c3104e3646930d696c9a90a08d762b6efd6552ebcdd1b81e8bccc0e2f09e7e90e42ca3578008e1730c13325d9f2977cee002618e69f1c56a0
 Description: FPGA Runtime for PCIe-Based FPGAs
 
 Package: libfrt-dev
 Architecture: amd64
-Version: 0.0.20210421.1
+Version: 0.0.20201207.1
 Priority: optional
 Section: devel
 Maintainer: Blaok Chi
 Installed-Size: 315
-Depends: jq, libtinyxml-dev, ocl-icd-opencl-dev, opencl-headers
+Depends: jq, libtinyxml-dev, opencl-headers
 Recommends: csh, xrt
-Filename: pool/main/xenial/libfrt-dev_0.0.20210421.1_amd64.deb
-Size: 91018
-MD5sum: 6283eb1644f9997248a64d2e7d4fbbda
-SHA1: 586cb380e1141a596b150454cbd2a7b0930bff77
-SHA256: 796322dd8ab6547a247ef093eec5b7f90e13303f9fce12036a63dbab9aa3c67a
-SHA512: d35f113bccb4cb5998c33259a6a854d79ae0c77092708c4d677e18936ac2218e1ec138eb92c30751c6c1b0de53447029fee7de7f7d09baaed9b1be43e910a16f
+Filename: pool/main/xenial/libfrt-dev_0.0.20201207.1_amd64.deb
+Size: 91008
+MD5sum: abe703e1908d6166746a3ea7dafc551e
+SHA1: 45a85664d7d408947128344e84d5007c3b81f3a3
+SHA256: be769cf45253696d391edad6e47ac8550b88e6cab7085afff641324bd747cd08
+SHA512: 999d860f1b10bb938ed5386ac6e87b9b65ad0b7690cf090547fc2045373380538151a09ef61330c543468b26e05c5cb24db0298774013b6c26b3305929e11975
+Description: FPGA Runtime for PCIe-Based FPGAs
+
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20200607.2
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 351
+Depends: jq, libtinyxml-dev, opencl-headers
+Recommends: csh, xrt
+Filename: pool/main/xenial/libfrt-dev_0.0.20200607.2_amd64.deb
+Size: 98164
+MD5sum: fad52d6ecc62753b0d5851e1c0fa6a52
+SHA1: a8112de1636f4354cc98d411750a894ba205fa78
+SHA256: 64d228d8451c8170d6f8bcfc5efe8915360c8662866e29d37c88ddb225d91dc9
+SHA512: 797f3c16be114cf6698b2a35606b1ed0424fda18346adf007e2e1605a34adad5e6340e125dd1f08d353d3acf7c1c506169a9ce642183486a93e960317bfe6030
 Description: FPGA Runtime for PCIe-Based FPGAs
 
 Package: libfrt-dev
@@ -91,6 +154,23 @@ Description: FPGA Runtime for PCIe-Based FPGAs
 
 Package: libfrt-dev
 Architecture: amd64
+Version: 0.0.20201109.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 314
+Depends: jq, libtinyxml-dev, opencl-headers
+Recommends: csh, xrt
+Filename: pool/main/xenial/libfrt-dev_0.0.20201109.1_amd64.deb
+Size: 90900
+MD5sum: 9430bb21370a1b1811ebb6bb427409d0
+SHA1: 0d12a70ff582ecfcbb99e273d8a49245e135fd4e
+SHA256: 8a5e5e9ef5a175b461017a8d6d8da0d1e8bdd5e3be9f1eb3f21eb7e2358b0bc9
+SHA512: cb508a0880ae27fd86ced69a0cbb201ecc089b3ea80785b787088e6769624ea3a14d925a85c4ea280b058aa49b8f6c335b7685852b2b2b7dc1c912e83f797176
+Description: FPGA Runtime for PCIe-Based FPGAs
+
+Package: libfrt-dev
+Architecture: amd64
 Version: 0.0.20200324.1
 Priority: optional
 Section: devel
@@ -104,6 +184,63 @@ MD5sum: d8d20afc69a8725e70a832d49cf837cb
 SHA1: d6a85c4e5c18e7b158c0e28a6540240a0b7c5fa1
 SHA256: 1be5d6d5df7238b7c59fc13795a4b8dace9db41b7ccc9f11d35dc67e7885809a
 SHA512: a5fef71148a0494fc0ac471b9d51b6033335b0639a70a34341abb87335b06d7c386c98dd4a2b9ffc1d07cced31dcbe20e6d070bc2a71dd947c34e36547b11387
+Description: FPGA Runtime for PCIe-Based FPGAs
+ DESCRIPTION
+ ===========
+ .
+ This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
+ .
+ .
+
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20201019.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 315
+Depends: jq, libtinyxml-dev, opencl-headers
+Recommends: csh, xrt
+Filename: pool/main/xenial/libfrt-dev_0.0.20201019.1_amd64.deb
+Size: 90964
+MD5sum: cc4a55516db745d1790c7954c5ae754f
+SHA1: 5b60f262116128bfe7dae0d30a166c43309702d2
+SHA256: 6ff75d73b6029d86a65cc944b94f4cc2105184f4c296ebfa06534eca7cfda65c
+SHA512: f695f4f0f35eb2ddfdbd0daa7fbaaf2e976bbec30a5669e33c29073761a8f2c560c0165c58694d6d17ffa3595c38d589f504ac625e29f8f54dd16558b08f8bb3
+Description: FPGA Runtime for PCIe-Based FPGAs
+
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20210817.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 335
+Depends: jq, libtinyxml-dev, ocl-icd-opencl-dev, opencl-headers, tar, zstd
+Recommends: csh, xrt
+Filename: pool/main/xenial/libfrt-dev_0.0.20210817.1_amd64.deb
+Size: 97758
+MD5sum: 6a4e4e9c8dd5a3fe420898a5447c58e7
+SHA1: 6c144709ee124c2ffffc15c7a9060c1a8e9218e8
+SHA256: ed4c00c22bea3b36f4d4f5ea7a07e99304ce560a0430c925ed72931507771a91
+SHA512: ca47a5c4aacc3be7752f00c50b5957377b91c18a262b4b204f56e6de1b00a11737bdc08c74d61f1bdd677f45a2827bf52899bdfb9b5c21ee4c4d83f0d82e5c30
+Description: FPGA Runtime for PCIe-Based FPGAs
+
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20200325.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 357
+Depends: jq, libtinyxml-dev, opencl-headers, xrt
+Recommends: csh
+Filename: pool/main/xenial/libfrt-dev_0.0.20200325.1_amd64.deb
+Size: 97110
+MD5sum: e87c744e52b1738eaecea4e2a25d34cb
+SHA1: ae3895dbbc127a7b4f0f1d094072d04fda609048
+SHA256: 871ac924ec4bd072d0d923df9dd56e8d9343a1ca917794a9548dd5aa78063b9c
+SHA512: 672e9c6233757ad48f2ec845b383eabcb119bbc6e621903834bf0c64f36eb4b93fe5bfbc70516ec6e4ca6ef9c04f3f3b2dc31c9ace3238a9400021bdbfdede18
 Description: FPGA Runtime for PCIe-Based FPGAs
  DESCRIPTION
  ===========
@@ -128,92 +265,6 @@ SHA1: 892f3b021668764c28942638ea75d1709fe3bfdd
 SHA256: c864338455ca04e749e87466f6379e0c1efe846411d005d1bf36126c9321ff98
 SHA512: a1c64051089cfe343b2c3a5905e71a6117558c8690f149c2fc556fd4cf9820fa1396e7c1f60cc633475256c0df641bbaabaf3bb20a0b4c0cf42ca53ef09a0e3a
 Description: FPGA Runtime for PCIe-Based FPGAs
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20200211.2
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 288
-Depends: jq, libtinyxml-dev, opencl-headers, xrt
-Recommends: csh
-Filename: pool/main/xenial/libfrt-dev_0.0.20200211.2_amd64.deb
-Size: 76714
-MD5sum: 04b38bc3fc1b09ed3f64986925aa757a
-SHA1: 84cc22d5505ef3fe1d9e63f14f7176ab8e713039
-SHA256: c6426764b49bd4b2dc70906efe555f554f635000c85eb892a0c1c4655431d708
-SHA512: 65a9631574e5832bbde9ca6730d58aef69defbe61748700e304068c8554a6704ce9a8b505d681a8a6589348631ce8599ec339c5d651709fc4d236d321dcf5dcb
-Description: FPGA Runtime for PCIe-Based FPGAs
- DESCRIPTION
- ===========
- .
- This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
- .
- .
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20200607.2
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 351
-Depends: jq, libtinyxml-dev, opencl-headers
-Recommends: csh, xrt
-Filename: pool/main/xenial/libfrt-dev_0.0.20200607.2_amd64.deb
-Size: 98164
-MD5sum: fad52d6ecc62753b0d5851e1c0fa6a52
-SHA1: a8112de1636f4354cc98d411750a894ba205fa78
-SHA256: 64d228d8451c8170d6f8bcfc5efe8915360c8662866e29d37c88ddb225d91dc9
-SHA512: 797f3c16be114cf6698b2a35606b1ed0424fda18346adf007e2e1605a34adad5e6340e125dd1f08d353d3acf7c1c506169a9ce642183486a93e960317bfe6030
-Description: FPGA Runtime for PCIe-Based FPGAs
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20200414.1
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 334
-Depends: jq, libtinyxml-dev, opencl-headers, xrt
-Recommends: csh
-Filename: pool/main/xenial/libfrt-dev_0.0.20200414.1_amd64.deb
-Size: 94210
-MD5sum: 3941d46a82007b8fe04231f17709d353
-SHA1: 84475c6154972d39f7cea35519eeec8380fb4ed7
-SHA256: 677a438af9e582b3c7bb2d48e0816bb5a8efa0a02b09b63fc8cad6f355990806
-SHA512: c62bf2bf4bc09f4fde6a1d05c7de5735eea261a490bcecfac91979c4cb6acb4c3fee84c749c30c44eb4519659f99f397490709964485ec76562017a638135aee
-Description: FPGA Runtime for PCIe-Based FPGAs
- DESCRIPTION
- ===========
- .
- This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
- .
- .
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20200325.1
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 357
-Depends: jq, libtinyxml-dev, opencl-headers, xrt
-Recommends: csh
-Filename: pool/main/xenial/libfrt-dev_0.0.20200325.1_amd64.deb
-Size: 97110
-MD5sum: e87c744e52b1738eaecea4e2a25d34cb
-SHA1: ae3895dbbc127a7b4f0f1d094072d04fda609048
-SHA256: 871ac924ec4bd072d0d923df9dd56e8d9343a1ca917794a9548dd5aa78063b9c
-SHA512: 672e9c6233757ad48f2ec845b383eabcb119bbc6e621903834bf0c64f36eb4b93fe5bfbc70516ec6e4ca6ef9c04f3f3b2dc31c9ace3238a9400021bdbfdede18
-Description: FPGA Runtime for PCIe-Based FPGAs
- DESCRIPTION
- ===========
- .
- This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
- .
- .
 
 Package: libfrt-dev
 Architecture: amd64
@@ -254,38 +305,4 @@ Description: FPGA Runtime for PCIe-Based FPGAs
  This is an installer created using CPack (https://cmake.org). No additional installation instructions provided.
  .
  .
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20201207.1
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 315
-Depends: jq, libtinyxml-dev, opencl-headers
-Recommends: csh, xrt
-Filename: pool/main/xenial/libfrt-dev_0.0.20201207.1_amd64.deb
-Size: 91008
-MD5sum: abe703e1908d6166746a3ea7dafc551e
-SHA1: 45a85664d7d408947128344e84d5007c3b81f3a3
-SHA256: be769cf45253696d391edad6e47ac8550b88e6cab7085afff641324bd747cd08
-SHA512: 999d860f1b10bb938ed5386ac6e87b9b65ad0b7690cf090547fc2045373380538151a09ef61330c543468b26e05c5cb24db0298774013b6c26b3305929e11975
-Description: FPGA Runtime for PCIe-Based FPGAs
-
-Package: libfrt-dev
-Architecture: amd64
-Version: 0.0.20201014.1
-Priority: optional
-Section: devel
-Maintainer: Blaok Chi
-Installed-Size: 314
-Depends: jq, libtinyxml-dev, opencl-headers
-Recommends: csh, xrt
-Filename: pool/main/xenial/libfrt-dev_0.0.20201014.1_amd64.deb
-Size: 90874
-MD5sum: de16e963566e00a6fb00172a2f7d3ed1
-SHA1: 023644525c1c82b04dd085c4aa4210fc1489b3dc
-SHA256: 99245275bd0b5bc5e54bcaf5753cb28cf958ddff0fcd54649af20255c6991ffd
-SHA512: 1db4c8b4cdc9432c3104e3646930d696c9a90a08d762b6efd6552ebcdd1b81e8bccc0e2f09e7e90e42ca3578008e1730c13325d9f2977cee002618e69f1c56a0
-Description: FPGA Runtime for PCIe-Based FPGAs
 
