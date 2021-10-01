@@ -104,7 +104,22 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Blaok Chi")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
-set(CPACK_GENERATOR TGZ DEB)
+string(
+  JOIN
+  ", "
+  CPACK_RPM_PACKAGE_REQUIRES
+  "jq"
+  "tinyxml-devel"
+  "ocl-icd-devel"
+  "opencl-headers"
+  "tar"
+  "zstd")
+set(CPACK_RPM_PACKAGE_NAME frt-devel)
+set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+
+set(CPACK_GENERATOR
+    TGZ DEB
+    CACHE STRING "Enable selected CPack generators")
 include(CPack)
 
 enable_testing()
