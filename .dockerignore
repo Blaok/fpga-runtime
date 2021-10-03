@@ -1,1 +1,5 @@
-.gitignore
+/.cache
+/.git
+/.mypy_cache
+/.vscode
+/build
