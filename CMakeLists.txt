@@ -30,9 +30,11 @@ set_target_properties(
   PROPERTIES OUTPUT_NAME frt PUBLIC_HEADER "src/frt.h;src/opencl-errors.h"
              POSITION_INDEPENDENT_CODE ON)
 target_include_directories(
-  frt_static PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
+  frt_static PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+                    ${XRT_INCLUDE_DIR})
 target_include_directories(
-  frt_shared PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
+  frt_shared PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+                    ${XRT_INCLUDE_DIR})
 target_link_libraries(
   frt_static
   PRIVATE TinyXML::TinyXML
