@@ -3,6 +3,15 @@ set -e
 
 function install-frt-for-ubuntu() {
   local codename="$1"
+
+  if ! which sudo >/dev/null; then
+    apt-get update
+    apt-get install -y sudo
+  fi
+
+  sudo apt-get update
+  sudo apt-get install -y apt-transport-https gnupg wget
+
   sudo tee /etc/apt/sources.list.d/frt.list <<EOF
 deb [arch=amd64] https://about.blaok.me/fpga-runtime ${codename} main
 EOF
