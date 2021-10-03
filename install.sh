@@ -23,7 +23,18 @@ EOF
 
 function install-frt-for-centos() {
   local version="$1"
-  sudo yum install -y "https://github.com/Blaok/fpga-runtime/releases/latest/download/frt-devel.centos.${version}.x86_64.rpm"
+
+  if ! type sudo >/dev/null 2>/dev/null; then
+    yum install -y sudo
+  fi
+
+  if ! yum list installed epel-release >/dev/null 2>/dev/null; then
+    sudo yum install -y --setopt=skip_missing_names_on_install=False \
+      "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+  fi
+
+  sudo yum install -y --setopt=skip_missing_names_on_install=False \
+    "https://github.com/Blaok/fpga-runtime/releases/latest/download/frt-devel.centos.${version}.x86_64.rpm"
 }
 
 source /etc/os-release
