@@ -1,0 +1,23 @@
+FROM centos:7
+ARG XRT_VERSION=202110.2.11.634_7.6.1810
+RUN yum install --assumeyes --setopt=skip_missing_names_on_install=False \
+  "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm" \
+  && yum clean all \
+  && rm -rf /var/cache/yum
+RUN yum install --assumeyes --setopt=skip_missing_names_on_install=False \
+  "https://www.xilinx.com/bin/public/openDownload?filename=xrt_${XRT_VERSION}-x86_64-xrt.rpm" \
+  cmake3 \
+  gcc-c++ \
+  ninja-build \
+  rpm-build \
+  tinyxml-devel \
+  && yum clean all \
+  && rm -rf /var/cache/yum
+ENV XILINX_XRT=/opt/xilinx/xrt
+WORKDIR /usr/src/frt
+COPY . .
+CMD \
+  cmake3 -GNinja -S. -Bbuild \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCPACK_GENERATOR=RPM \
+  && cmake3 --build build --target package
