@@ -4,6 +4,8 @@ cmake_policy(SET CMP0076 NEW)
 project(frt)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
 find_package(XRT REQUIRED)
@@ -38,11 +40,11 @@ target_include_directories(
 target_link_libraries(
   frt_static
   PRIVATE TinyXML::TinyXML
-  PUBLIC OpenCL::OpenCL)
+  PUBLIC OpenCL::OpenCL Threads::Threads)
 target_link_libraries(
   frt_shared
   PRIVATE TinyXML::TinyXML
-  PUBLIC OpenCL::OpenCL)
+  PUBLIC OpenCL::OpenCL Threads::Threads)
 
 include(GNUInstallDirs)
 install(
