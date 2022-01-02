@@ -2,6 +2,7 @@
 #include "frt.h"
 
 #include <cerrno>
+#include <cstddef>
 #include <cstdio>
 #include <cstring>
 
@@ -515,6 +516,10 @@ cl::Buffer Instance::CreateBuffer(int index, cl_mem_flags flags, size_t size,
   return buffer;
 }
 
+size_t Instance::SuspendBuf(int index) {
+  return this->load_indices_.erase(index) + this->store_indices_.erase(index);
+}
+
 void Instance::WriteToDevice() {
   switch (this->vendor_) {
     case Vendor::kXilinx: {
@@ -523,6 +528,8 @@ void Instance::WriteToDevice() {
         CL_CHECK(cmd_.enqueueMigrateMemObjects(
             GetLoadBuffers(), /* flags = */ 0, /* events = */ nullptr,
             load_event_.data()));
+      } else {
+        load_event_.clear();
       }
       break;
     }
@@ -551,6 +558,8 @@ void Instance::ReadFromDevice() {
         CL_CHECK(cmd_.enqueueMigrateMemObjects(
             GetStoreBuffers(), CL_MIGRATE_MEM_OBJECT_HOST, &compute_event_,
             store_event_.data()));
+      } else {
+        store_event_.clear();
       }
       break;
     }

@@ -1,5 +1,7 @@
-#ifndef FPGA_RUNTIME_H_
+﻿#ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
+
+#include <cstddef>
 
 #include <algorithm>
 #include <iostream>
@@ -323,6 +325,9 @@ class Instance {
     AllocBuf(0, std::forward<Args>(args)...);
   }
 #undef FUNC_INFO
+
+  // Suspends a buffer from being transferred between host and device.
+  size_t SuspendBuf(int index);
 
   void WriteToDevice();
   void ReadFromDevice();
