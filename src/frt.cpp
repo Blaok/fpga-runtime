@@ -528,8 +528,8 @@ void Instance::WriteToDevice() {
     }
     case Vendor::kIntel: {
       load_event_.resize(this->load_indices_.size());
-      for (size_t i = 0; i < this->load_indices_.size(); ++i) {
-        auto index = this->load_indices_[i];
+      int i = 0;
+      for (auto index : this->load_indices_) {
         auto buffer = this->buffer_table_[index];
         CL_CHECK(cmd_.enqueueWriteBuffer(
             buffer, /* blocking = */ CL_FALSE, /* offset = */ 0,
@@ -556,8 +556,8 @@ void Instance::ReadFromDevice() {
     }
     case Vendor::kIntel: {
       store_event_.resize(this->store_indices_.size());
-      for (size_t i = 0; i < this->store_indices_.size(); ++i) {
-        auto index = this->store_indices_[i];
+      int i = 0;
+      for (auto index : this->store_indices_) {
         auto buffer = this->buffer_table_[index];
         cmd_.enqueueReadBuffer(buffer, /* blocking = */ CL_FALSE,
                                /* offset = */ 0, buffer.getInfo<CL_MEM_SIZE>(),

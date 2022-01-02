@@ -1,4 +1,4 @@
-﻿#ifndef FPGA_RUNTIME_H_
+#ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
 
 #include <algorithm>
@@ -8,6 +8,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -183,8 +184,8 @@ class Instance {
   std::unordered_map<int, cl::Buffer> buffer_table_;
   std::unordered_map<int, void*> host_ptr_table_;
   std::unordered_map<int32_t, ArgInfo> arg_table_;
-  std::vector<int> load_indices_;
-  std::vector<int> store_indices_;
+  std::unordered_set<int> load_indices_;
+  std::unordered_set<int> store_indices_;
   std::vector<cl::Event> load_event_;
   std::vector<cl::Event> compute_event_;
   std::vector<cl::Event> store_event_;
@@ -279,22 +280,22 @@ class Instance {
     cl::Buffer buffer = CreateBuffer(
         index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
         const_cast<typename std::remove_const<T>::type*>(arg.Get()));
-    load_indices_.push_back(index);
+    load_indices_.insert(index);
   }
   template <typename T>
   void AllocBuf(int index, ReadOnlyBuffer<T> arg) {
     FUNC_INFO(index)
     cl::Buffer buffer =
         CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
-    store_indices_.push_back(index);
+    store_indices_.insert(index);
   }
   template <typename T>
   void AllocBuf(int index, ReadWriteBuffer<T> arg) {
     FUNC_INFO(index)
     cl::Buffer buffer =
         CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
-    load_indices_.push_back(index);
-    store_indices_.push_back(index);
+    load_indices_.insert(index);
+    store_indices_.insert(index);
   }
   template <typename T>
   void AllocBuf(int index, PlaceholderBuffer<T> arg) {
