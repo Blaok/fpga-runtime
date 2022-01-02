@@ -58,9 +58,9 @@ int main(int argc, char* argv[]) {
     }
   }
   clog << "PASS!" << endl;
-  delete[] a;
-  delete[] b;
-  delete[] c;
+  free(a);
+  free(b);
+  free(c);
   delete[] c_base;
   return 0;
 }
