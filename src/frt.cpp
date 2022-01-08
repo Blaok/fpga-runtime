@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 #include <fstream>
@@ -11,12 +12,14 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <elf.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <tinyxml.h>
 #include <CL/cl2.hpp>
@@ -40,9 +43,12 @@ using std::vector;
 namespace fpga {
 
 namespace internal {
-string Exec(const char* cmd) {
+
+namespace {
+
+string Exec(const string& cmd) {
   std::string result;
-  unique_ptr<FILE, decltype(&pclose)> pipe{popen(cmd, "r"), pclose};
+  unique_ptr<FILE, decltype(&pclose)> pipe{popen(cmd.c_str(), "r"), pclose};
   if (pipe == nullptr) {
     throw runtime_error(string{"cannot execute: "} + cmd);
   }
@@ -51,6 +57,24 @@ string Exec(const char* cmd) {
     result += c;
   }
   return result;
+}
+
+void UpdateEnviron(const string& script) {
+  string cmd = "source " + script + " >/dev/null 2>&1 && env -0";
+  cmd = "bash -c '" + cmd + "'";
+  const string envs = internal::Exec(cmd);
+  for (size_t n = 0; n < envs.size();) {
+    const string env = envs.c_str() + n;
+    n += env.size() + 1;
+
+    const auto pos = env.find('=');
+    const auto name = env.substr(0, pos);
+    const auto new_value = env.substr(pos + 1);
+    const auto old_value = getenv(name.c_str());
+    if (old_value == nullptr || new_value != old_value) {
+      setenv(name.c_str(), new_value.c_str(), /*replace=*/1);
+    }
+  }
 }
 
 template <cl_profiling_info name>
@@ -89,6 +113,8 @@ cl::Program::Binaries LoadBinaryFile(const string& file_name) {
   return {{std::istreambuf_iterator<char>(stream),
            std::istreambuf_iterator<char>()}};
 }
+
+}  // namespace
 
 Stream::~Stream() {
   if (stream_ != nullptr) {
@@ -346,11 +372,54 @@ Instance::Instance(const string& bitstream) {
       throw runtime_error("unexpected bitstream file");
     }
   }
-  if (getenv("XCL_EMULATION_MODE")) {
+
+  if (const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE")) {
+    string xilinx_tool;
+    for (const auto env : {
+             "XILINX_VITIS",
+             "XILINX_SDX",
+             "XILINX_HLS",
+             "XILINX_VIVADO",
+         }) {
+      if (const auto value = getenv(env)) {
+        xilinx_tool = value;
+        break;
+      }
+    }
+
+    if (xilinx_tool.empty()) {
+      for (const string hls : {"vitis_hls", "vivado_hls"}) {
+        string cmd = hls + " -version -help -l /dev/null 2>&-";
+        cmd = "bash -c '" + cmd + "'";
+        std::istringstream lines(internal::Exec(cmd));
+        for (string line; getline(lines, line);) {
+          const string prefix = "source ";
+          const string suffix = "/scripts/" + hls + "/hls.tcl -notrace";
+          if (line.size() > prefix.size() + suffix.size() &&
+              line.compare(0, prefix.size(), prefix) == 0 &&
+              line.compare(line.size() - suffix.size(), suffix.size(),
+                           suffix) == 0) {
+            xilinx_tool = line.substr(
+                prefix.size(), line.size() - prefix.size() - suffix.size());
+            break;
+          }
+        }
+      }
+    }
+
+    internal::UpdateEnviron(xilinx_tool + "/settings64.sh");
+    if (const auto xrt = getenv("XILINX_XRT")) {
+      internal::UpdateEnviron(string(xrt) + "/setup.sh");
+    }
+
+    const auto uid = std::to_string(geteuid());
+
+    // Vitis software simulation stucks without $USER.
+    setenv("USER", uid.c_str(), /*repalce=*/0);
+
     const char* tmpdir_or_null = getenv("TMPDIR");
     string tmpdir = tmpdir_or_null ? tmpdir_or_null : "/tmp";
-    tmpdir += "/.frt.";
-    tmpdir += cuserid(nullptr);
+    tmpdir += "/.frt." + uid;
     if (mkdir(tmpdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) && errno != EEXIST) {
       throw runtime_error(string("cannot create tmpdir ") + tmpdir + ": " +
                           strerror(errno));
@@ -361,15 +430,15 @@ Instance::Instance(const string& bitstream) {
 
     // If EMCONFIG_PATH is not set, use a per-user and per-device tmpdir to
     // cache `emconfig.json`.
-    const char* emconfig_dir_or_null = getenv("EMCONFIG_PATH");
+
     string emconfig_dir;
-    if (emconfig_dir_or_null == nullptr) {
+    if (const char* emconfig_dir_or_null = getenv("EMCONFIG_PATH")) {
+      emconfig_dir = emconfig_dir_or_null;
+    } else {
       emconfig_dir = tmpdir;
       emconfig_dir += "/emconfig.";
       emconfig_dir += target_device_name;
       setenv("EMCONFIG_PATH", emconfig_dir.c_str(), 0);
-    } else {
-      emconfig_dir = emconfig_dir_or_null;
     }
 
     // Generate `emconfig.json` when necessary.
@@ -388,39 +457,6 @@ Instance::Instance(const string& bitstream) {
     }
   }
 
-  const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE");
-  if (xcl_emulation_mode != nullptr && string{"sw_emu"} == xcl_emulation_mode) {
-    string ld_library_path;
-    if (auto xilinx_sdx = getenv("XILINX_VITIS")) {
-      // find LD_LIBRARY_PATH by sourcing ${XILINX_VITIS}/settings64.sh
-      ld_library_path =
-          internal::Exec(R"(bash -c '. "${XILINX_VITIS}/settings64.sh" && )"
-                         R"(printf "${LD_LIBRARY_PATH}"')");
-    } else {
-      // find XILINX_VITIS and LD_LIBRARY_PATH with vivado_hls
-      // ld_library_path is null-separated string of both env vars
-      ld_library_path = internal::Exec(
-          R"(bash -c '. "$(vivado_hls -r -l /dev/null | grep "^/"))"
-          R"(/settings64.sh" && printf "${LD_LIBRARY_PATH}\0${XILINX_VITIS}"')");
-      setenv("XILINX_VITIS",
-             ld_library_path.c_str() + strlen(ld_library_path.c_str()) + 1, 1);
-    }
-    if (auto xilinx_sdx = getenv("XILINX_SDX")) {
-      // find LD_LIBRARY_PATH by sourcing ${XILINX_SDX}/settings64.sh
-      ld_library_path =
-          internal::Exec(R"(bash -c '. "${XILINX_SDX}/settings64.sh" && )"
-                         R"(printf "${LD_LIBRARY_PATH}"')");
-    } else {
-      // find XILINX_SDX and LD_LIBRARY_PATH with vivado_hls
-      // ld_library_path is null-separated string of both env vars
-      ld_library_path = internal::Exec(
-          R"(bash -c '. "$(vivado_hls -r -l /dev/null | grep "^/"))"
-          R"(/settings64.sh" && printf "${LD_LIBRARY_PATH}\0${XILINX_SDX}"')");
-      setenv("XILINX_SDX",
-             ld_library_path.c_str() + strlen(ld_library_path.c_str()) + 1, 1);
-    }
-    setenv("LD_LIBRARY_PATH", ld_library_path.c_str(), 1);
-  }
   vector<cl::Platform> platforms;
   CL_CHECK(cl::Platform::get(&platforms));
   cl_int err;
