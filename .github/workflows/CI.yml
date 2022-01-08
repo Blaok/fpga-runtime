@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  - push
+
+jobs:
+  CI:
+    runs-on:
+      - self-hosted
+      - Linux
+      - xilinx-tools
+
+    strategy:
+      matrix:
+        xocl-version:
+          - 2019.2
+          - 2020.2
+
+    env:
+      # Cannot source Xilinx scripts because they mess up many system libraries.
+      XILINX_VITIS: /opt/tools/xilinx/Vitis/${{ matrix.xocl-version }}
+
+    steps:
+      - name: Checkout myself
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake \
+            faketime \
+            gcc-multilib \
+            libc6-dev-i386 \
+            libncurses5 \
+            libtinfo5 \
+            libtinyxml-dev \
+            libxext6 \
+            opencl-headers \
+            unzip \
+            xilinx-u250-xdma-dev \
+            xilinx-u50-xdma-dev \
+            xrt \
+      - name: Configure myself
+        run: cmake -S. -Bbuild
+      - name: Build myself
+        run: cmake --build build --target all
+      - name: Test myself
+        working-directory: build
+        run: |
+          # Some Vitis versions have a bug where xclbinutil is not found without
+          # manually sourcing the XRT setup script.
+          source "${XILINX_XRT}"/setup.sh
+          ctest --verbose
