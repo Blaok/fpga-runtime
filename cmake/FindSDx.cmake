@@ -62,7 +62,8 @@ function(add_xocc_compile_target target_name)
   get_filename_component(temp_dir ${temp_dir} ABSOLUTE)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
-  set(cwd /tmp/cmake.xocc.$ENV{USER})
+  execute_process(COMMAND id -uz OUTPUT_VARIABLE cwd)
+  set(cwd /tmp/cmake.xocc.${cwd})
 
   # compose the xocc compile command
   set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
@@ -170,7 +171,8 @@ function(add_xocc_link_target target_name)
   get_filename_component(temp_dir ${temp_dir} ABSOLUTE)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
-  set(cwd /tmp/cmake.xocc.$ENV{USER})
+  execute_process(COMMAND id -uz OUTPUT_VARIABLE cwd)
+  set(cwd /tmp/cmake.xocc.${cwd})
 
   # compose the xocc link command
   set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
