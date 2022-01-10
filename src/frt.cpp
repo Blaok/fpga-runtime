@@ -578,6 +578,7 @@ void Instance::WriteToDevice() {
             buffer, /* blocking = */ CL_FALSE, /* offset = */ 0,
             buffer.getInfo<CL_MEM_SIZE>(), host_ptr_table_[index],
             /* events = */ nullptr, &load_event_[i]));
+        ++i;
       }
       break;
     }
@@ -608,6 +609,7 @@ void Instance::ReadFromDevice() {
                                /* offset = */ 0, buffer.getInfo<CL_MEM_SIZE>(),
                                host_ptr_table_[index], &compute_event_,
                                &store_event_[i]);
+        ++i;
       }
       break;
     }
