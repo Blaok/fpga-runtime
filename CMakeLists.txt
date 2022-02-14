@@ -10,9 +10,16 @@ find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
 find_package(XRT REQUIRED)
 
-set(frt_sources src/frt.cpp)
+set(frt_sources
+    src/frt.cpp
+    src/frt/arg_info.cpp
+    src/frt/intel_opencl_device.cpp
+    src/frt/opencl_device.cpp
+    src/frt/xilinx_opencl_device.cpp
+    src/frt/xilinx_opencl_stream.cpp
+)
 set(frt_compile_features
-    cxx_std_11
+    cxx_std_14
     cxx_alias_templates
     cxx_auto_type
     cxx_decltype
@@ -25,6 +32,11 @@ set(frt_compile_features
     cxx_strong_enums
     cxx_variadic_templates
 )
+set(frt_compile_definitions
+    CL_HPP_CL_1_2_DEFAULT_BUILD
+    CL_HPP_TARGET_OPENCL_VERSION=120
+    CL_HPP_MINIMUM_OPENCL_VERSION=120
+)
 set(frt_private_link_libraries TinyXML::TinyXML)
 set(frt_public_link_libraries OpenCL::OpenCL Threads::Threads)
 
@@ -35,6 +47,8 @@ target_sources(frt_static PRIVATE ${frt_sources})
 target_sources(frt_shared PRIVATE ${frt_sources})
 target_compile_features(frt_static PUBLIC ${frt_compile_features})
 target_compile_features(frt_shared PUBLIC ${frt_compile_features})
+target_compile_definitions(frt_static PUBLIC ${frt_compile_definitions})
+target_compile_definitions(frt_shared PUBLIC ${frt_compile_definitions})
 set_target_properties(frt_static frt_shared PROPERTIES OUTPUT_NAME frt)
 set_target_properties(frt_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(frt_static PROPERTIES EXPORT_NAME frt)

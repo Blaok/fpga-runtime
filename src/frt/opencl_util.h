@@ -1,10 +1,12 @@
-#ifndef OPENCL_ERRORS_H_
-#define OPENCL_ERRORS_H_
+#ifndef FPGA_RUNTIME_OPENCL_UTIL_H_
+#define FPGA_RUNTIME_OPENCL_UTIL_H_
+
+#include <CL/cl.h>
 
 #define CASE(err) \
   case err:       \
     return #err;
-inline const char* ToString(cl_int err) {
+inline const char* OpenclErrToString(cl_int err) {
   switch (err) {
     CASE(CL_SUCCESS);
     CASE(CL_DEVICE_NOT_FOUND);
@@ -89,4 +91,13 @@ inline const char* ToString(cl_int err) {
 }
 #undef CASE
 
-#endif  // OPENCL_ERRORS_H_
+#define CL_CHECK(err)                                                    \
+  do {                                                                   \
+    cl_int error = (err);                                                \
+    if (error != CL_SUCCESS) {                                           \
+      throw std::runtime_error(__FILE__ ":" + std::to_string(__LINE__) + \
+                               ": " + OpenclErrToString(error));         \
+    }                                                                    \
+  } while (0)
+
+#endif  // FPGA_RUNTIME_OPENCL_UTIL_H_

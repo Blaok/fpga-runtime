@@ -1,91 +1,36 @@
-﻿#ifndef FPGA_RUNTIME_H_
+#ifndef FPGA_RUNTIME_H_
 #define FPGA_RUNTIME_H_
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 
-#include <algorithm>
 #include <iostream>
-#include <map>
-#include <stdexcept>
+#include <memory>
+#include <ratio>
 #include <string>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
-#define CL_HPP_CL_1_2_DEFAULT_BUILD
-#define CL_HPP_TARGET_OPENCL_VERSION 120
-#define CL_HPP_MINIMUM_OPENCL_VERSION 120
-#include <CL/cl2.hpp>
-
-#include "opencl-errors.h"
-
-extern "C" {
-struct _cl_stream;
-}  // extern "C"
+#include "frt/arg_info.h"
+#include "frt/buffer.h"
+#include "frt/device.h"
+#include "frt/stream.h"
+#include "frt/stream_wrapper.h"
+#include "frt/tag.h"
 
 namespace fpga {
-namespace internal {
-
-#ifdef KEEP_CL_CHECK
-#define CL_CHECK(err) ::fpga::internal::ClCheck((err), __FILE__, __LINE__);
-#endif  // KEEP_CL_CHECK
-
-inline void ClCheck(cl_int err, const char* file, int line) {
-  if (err != CL_SUCCESS) {
-    throw std::runtime_error(std::string(file) + ":" + std::to_string(line) +
-                             ": " + ToString(err));
-  }
-}
 
 template <typename T>
-class Buffer {
-  T* ptr_;
-  size_t n_;
-
- public:
-  Buffer(T* ptr, size_t n) : ptr_(ptr), n_(n) {}
-  operator T*() const { return ptr_; }
-  T& operator*() const { return *ptr_; }
-  T* operator->() const { return ptr_; }
-  T* Get() const { return ptr_; }
-  size_t SizeInBytes() const { return n_ * sizeof(T); }
-};
-
-class Stream {
- protected:
-  const std::string name_;
-  _cl_stream* stream_ = nullptr;
-  cl::Kernel kernel_;
-  cl::Device device_;
-
-  Stream(const std::string& name) : name_(name) {}
-  Stream(const Stream&) = delete;
-  ~Stream();
-
-  void Attach(const cl::Device& device, const cl::Kernel& kernel, int index,
-              /* cl_stream_flags */ uint64_t flags);
-};
-
-}  // namespace internal
-
+using ReadOnlyBuffer = internal::Buffer<T, internal::Tag::kReadOnly>;
 template <typename T>
-class ReadOnlyBuffer : public internal::Buffer<T> {
-  using internal::Buffer<T>::Buffer;
-};
+using WriteOnlyBuffer = internal::Buffer<T, internal::Tag::kWriteOnly>;
 template <typename T>
-class WriteOnlyBuffer : public internal::Buffer<T> {
-  using internal::Buffer<T>::Buffer;
-};
+using ReadWriteBuffer = internal::Buffer<T, internal::Tag::kReadWrite>;
 template <typename T>
-class ReadWriteBuffer : public internal::Buffer<T> {
-  using internal::Buffer<T>::Buffer;
-};
-template <typename T>
-class PlaceholderBuffer : public internal::Buffer<T> {
-  using internal::Buffer<T>::Buffer;
-};
+using PlaceholderBuffer = internal::Buffer<T, internal::Tag::kPlaceHolder>;
+
 template <typename T>
 ReadOnlyBuffer<T> ReadOnly(T* ptr, size_t n) {
   return ReadOnlyBuffer<T>(ptr, n);
@@ -103,248 +48,71 @@ PlaceholderBuffer<T> Placeholder(T* ptr, size_t n) {
   return PlaceholderBuffer<T>(ptr, n);
 }
 
-class ReadStream : public internal::Stream {
- public:
-  using internal::Stream::Attach;
-  ReadStream(const std::string& name) : internal::Stream(name) {}
-  ReadStream(const ReadStream&) = delete;
-
-  void Attach(const cl::Device& device, const cl::Kernel& kernel, int index);
-
-  template <typename T>
-  void Read(T* host_ptr, uint64_t size, bool eos = true) {
-    ReadRaw(host_ptr, size * sizeof(T), eos);
-  }
-
- private:
-  void ReadRaw(void* host_ptr, uint64_t size, bool eos);
-};
-
-class WriteStream : public internal::Stream {
- public:
-  using internal::Stream::Attach;
-  WriteStream(const std::string& name) : internal::Stream(name) {}
-  WriteStream(const WriteStream&) = delete;
-
-  void Attach(cl::Device device, cl::Kernel kernel, int index);
-
-  template <typename T>
-  void Write(const T* host_ptr, uint64_t size, bool eos = true) {
-    WriteRaw(host_ptr, size * sizeof(T), eos);
-  }
-
- private:
-  void WriteRaw(const void* host_ptr, uint64_t size, bool eos);
-};
-
-struct ArgInfo {
-  enum Cat {
-    kScalar = 0,
-    kMmap = 1,
-    kStream = 2,
-  };
-  int32_t index;
-  std::string name;
-  std::string type;
-  Cat cat;
-  std::string tag;
-};
-
-inline std::ostream& operator<<(std::ostream& os, const ArgInfo::Cat& cat) {
-  switch (cat) {
-    case ArgInfo::kScalar:
-      return os << "scalar";
-    case ArgInfo::kMmap:
-      return os << "mmap";
-    case ArgInfo::kStream:
-      return os << "stream";
-  }
-  return os;
-}
-
-inline std::ostream& operator<<(std::ostream& os, const ArgInfo& arg) {
-  os << "ArgInfo: {index: " << arg.index << ", name: ‘" << arg.name
-     << "’, type: ‘" << arg.type << "’, category: " << arg.cat;
-  if (!arg.tag.empty()) os << ", tag: ‘" << arg.tag << "’";
-  os << "}";
-  return os;
-}
-
-enum class Vendor {
-  kUnknown = 0,
-  kXilinx = 1,
-  kIntel = 2,
-};
+using ReadStream = internal::Stream<internal::Tag::kReadOnly>;
+using WriteStream = internal::Stream<internal::Tag::kWriteOnly>;
 
 class Instance {
-  cl::Device device_;
-  cl::Context context_;
-  cl::CommandQueue cmd_;
-  cl::Program program_;
-  // Maps prefix sum of arg count to kernels.
-  std::map<int, cl::Kernel> kernels_;
-  std::unordered_map<int, cl::Buffer> buffer_table_;
-  std::unordered_map<int, void*> host_ptr_table_;
-  std::unordered_map<int32_t, ArgInfo> arg_table_;
-  std::unordered_set<int> load_indices_;
-  std::unordered_set<int> store_indices_;
-  std::vector<cl::Event> load_event_;
-  std::vector<cl::Event> compute_event_;
-  std::vector<cl::Event> store_event_;
-  Vendor vendor_ = Vendor::kUnknown;
-
-  std::vector<cl::Memory> GetLoadBuffers();
-  std::vector<cl::Memory> GetStoreBuffers();
-  std::pair<int, cl::Kernel> GetKernel(int index) {
-    auto it = --this->kernels_.upper_bound(index);
-    return {index - it->first, it->second};
-  }
-  template <typename T>
-  void SetArgInternal(int index, T arg) {
-    auto pair = this->GetKernel(index);
-    pair.second.setArg(pair.first, arg);
-  }
-
  public:
   Instance(const std::string& bitstream);
 
-  // Return info of all args as a vector, sorted by the index.
-  std::vector<ArgInfo> GetArgsInfo() {
-    std::vector<ArgInfo> args;
-    args.reserve(arg_table_.size());
-    for (const auto& arg : arg_table_) {
-      args.push_back(arg.second);
-    }
-    std::sort(args.begin(), args.end(),
-              [](const ArgInfo& lhs, const ArgInfo& rhs) {
-                return lhs.index < rhs.index;
-              });
-    return args;
+  // Sets a scalar argument.
+  template <typename T>
+  void SetArg(int index, T arg) {
+    device_->SetScalarArg(index, &arg, sizeof(arg));
   }
 
-#ifdef NDEBUG
-#define FUNC_INFO(index)
-#else  // NDEBUG
-#define FUNC_INFO(index)                                  \
-  std::clog << "DEBUG: Function ‘" << __PRETTY_FUNCTION__ \
-            << "’ called with index = " << (index) << std::endl;
-#endif  // NDEBUG
+  // Sets a buffer argument.
+  template <typename T, internal::Tag tag>
+  void SetArg(int index, internal::Buffer<T, tag> arg) {
+    device_->SetBufferArg(index, tag, arg);
+  }
 
-  // SetArg
-  template <typename T>
-  void SetArg(int index, T&& arg) {
-    FUNC_INFO(index)
-    this->SetArgInternal(index, arg);
+  // Sets a stream argument.
+  template <internal::Tag tag>
+  void SetArg(int index, internal::Stream<tag>& arg) {
+    device_->SetStreamArg(index, tag, arg);
   }
-  template <typename T>
-  void SetArg(int index, ReadOnlyBuffer<T> arg) {
-    FUNC_INFO(index)
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  template <typename T>
-  void SetArg(int index, WriteOnlyBuffer<T> arg) {
-    FUNC_INFO(index)
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  template <typename T>
-  void SetArg(int index, ReadWriteBuffer<T> arg) {
-    FUNC_INFO(index)
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  template <typename T>
-  void SetArg(int index, PlaceholderBuffer<T> arg) {
-    FUNC_INFO(index)
-    this->SetArgInternal(index, buffer_table_[index]);
-  }
-  void SetArg(int index, WriteStream& arg) { FUNC_INFO(index) }
-  void SetArg(int index, ReadStream& arg) { FUNC_INFO(index) }
-  template <typename T, typename... Args>
-  void SetArg(int index, T&& arg, Args&&... other_args) {
-    SetArg(index, std::forward<T>(arg));
-    SetArg(index + 1, std::forward<Args>(other_args)...);
-  }
+
+  // Sets all arguments.
   template <typename... Args>
-  void SetArg(Args&&... args) {
+  void SetArgs(Args&&... args) {
     SetArg(0, std::forward<Args>(args)...);
   }
 
-  cl::Buffer CreateBuffer(int index, cl_mem_flags flags, size_t size,
-                          void* host_ptr);
+  // Allocates buffer for an argument. This function is now deprecated and its
+  // original functionality is now part of `SetArg`.
+  template <typename T>
+  [[deprecated("'SetArg' is sufficient")]] void AllocBuf(int index, T arg) {}
 
-  // AllocBuf
-  template <typename T>
-  void AllocBuf(int index, T&& arg) {
-    FUNC_INFO(index)
-  }
-  template <typename T>
-  void AllocBuf(int index, WriteOnlyBuffer<T> arg) {
-    FUNC_INFO(index)
-    cl::Buffer buffer = CreateBuffer(
-        index, CL_MEM_WRITE_ONLY, arg.SizeInBytes(),
-        const_cast<typename std::remove_const<T>::type*>(arg.Get()));
-    load_indices_.insert(index);
-  }
-  template <typename T>
-  void AllocBuf(int index, ReadOnlyBuffer<T> arg) {
-    FUNC_INFO(index)
-    cl::Buffer buffer =
-        CreateBuffer(index, CL_MEM_READ_ONLY, arg.SizeInBytes(), arg.Get());
-    store_indices_.insert(index);
-  }
-  template <typename T>
-  void AllocBuf(int index, ReadWriteBuffer<T> arg) {
-    FUNC_INFO(index)
-    cl::Buffer buffer =
-        CreateBuffer(index, CL_MEM_READ_WRITE, arg.SizeInBytes(), arg.Get());
-    load_indices_.insert(index);
-    store_indices_.insert(index);
-  }
-  template <typename T>
-  void AllocBuf(int index, PlaceholderBuffer<T> arg) {
-    FUNC_INFO(index)
-    cl::Buffer buffer = CreateBuffer(index, 0, arg.SizeInBytes(), arg.Get());
-  }
-  void AllocBuf(int index, WriteStream& arg) {
-    FUNC_INFO(index)
-    auto pair = this->GetKernel(index);
-    arg.Attach(device_, pair.second, pair.first);
-  }
-  void AllocBuf(int index, ReadStream& arg) {
-    FUNC_INFO(index)
-    auto pair = this->GetKernel(index);
-    arg.Attach(device_, pair.second, pair.first);
-  }
-
-  template <typename T, typename... Args>
-  void AllocBuf(int index, T&& arg, Args&&... other_args) {
-    AllocBuf(index, std::forward<T>(arg));
-    AllocBuf(index + 1, std::forward<Args>(other_args)...);
-  }
-  template <typename... Args>
-  void AllocBuf(Args&&... args) {
-    AllocBuf(0, std::forward<Args>(args)...);
-  }
-#undef FUNC_INFO
-
-  // Suspends a buffer from being transferred between host and device.
+  // Suspends a buffer from being transferred between host and device and
+  // returns the number of transfer operations suspended.
   size_t SuspendBuf(int index);
 
+  // Writes buffers to the device.
   void WriteToDevice();
+
+  // Reads buffers to the device.
   void ReadFromDevice();
+
+  // Executes the program on the device.
   void Exec();
+
+  // Waits for the program to finish.
   void Finish();
 
+  // Invokes the program on the device. This is a shortcut for `SetArgs`,
+  // `WriteToDevice`, `Exec`, `ReadFromDevice`, and if there is no stream
+  // arguments, `Finish` as well.
   template <typename... Args>
   Instance& Invoke(Args&&... args) {
-    AllocBuf(std::forward<Args>(args)...);
-    SetArg(std::forward<Args>(args)...);
+    SetArgs(std::forward<Args>(args)...);
     WriteToDevice();
     Exec();
     ReadFromDevice();
     bool has_stream = false;
-    bool dummy[sizeof...(Args)]{(
+    bool _[sizeof...(Args)] = {(
         has_stream |=
-        std::is_base_of<internal::Stream,
+        std::is_base_of<internal::StreamWrapper,
                         typename std::remove_reference<Args>::type>::value)...};
     if (!has_stream) {
 #ifndef NDEBUG
@@ -356,19 +124,47 @@ class Instance {
     return *this;
   }
 
-  cl_ulong LoadTimeNanoSeconds();
-  cl_ulong ComputeTimeNanoSeconds();
-  cl_ulong StoreTimeNanoSeconds();
+  // Returns information of all args as a vector, sorted by the index.
+  std::vector<ArgInfo> GetArgsInfo() const;
+
+  // Returns the load time in nanoseconds.
+  int64_t LoadTimeNanoSeconds();
+
+  // Returns the compute time in nanoseconds.
+  int64_t ComputeTimeNanoSeconds();
+
+  // Returns the store time in nanoseconds.
+  int64_t StoreTimeNanoSeconds();
+
+  // Returns the load time in seconds.
   double LoadTimeSeconds();
+
+  // Returns the compute time in seconds.
   double ComputeTimeSeconds();
+
+  // Returns the store time in seconds.
   double StoreTimeSeconds();
+
+  // Returns the load throughput in GB/s.
   double LoadThroughputGbps();
+
+  // Returns the store throughput in GB/s.
   double StoreThroughputGbps();
+
+ private:
+  template <typename T, typename... Args>
+  void SetArg(int index, T&& arg, Args&&... other_args) {
+    SetArg(index, std::forward<T>(arg));
+    SetArg(index + 1, std::forward<Args>(other_args)...);
+  }
+
+  std::unique_ptr<internal::Device> device_;
 };
 
-template <typename... Args>
-Instance Invoke(const std::string& bitstream, Args&&... args) {
-  return Instance(bitstream).Invoke(std::forward<Args>(args)...);
+template <typename Arg, typename... Args>
+Instance Invoke(const std::string& bitstream, Arg&& arg, Args&&... args) {
+  return std::move(Instance(bitstream).Invoke(std::forward<Arg>(arg),
+                                              std::forward<Args>(args)...));
 }
 
 }  // namespace fpga
