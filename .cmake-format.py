@@ -73,3 +73,7 @@ additional_commands = {
         }
     },
 }
+
+with section('format'):
+    max_lines_hwrap = 0
+    dangle_parens = True
