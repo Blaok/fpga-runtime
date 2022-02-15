@@ -16,7 +16,6 @@ struct ArgInfo {
   std::string name;
   std::string type;
   Cat cat;
-  std::string tag;
 };
 
 std::ostream& operator<<(std::ostream& os, const ArgInfo::Cat& cat);
