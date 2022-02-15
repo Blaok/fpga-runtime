@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < n; ++i) {
     a[i] = i * i % 10;
     b[i] = i * i % 9;
-    c[i] = 0;
+    c[i] = -1;
     c_base[i] = 1;
   }
   auto instance = fpga::Invoke(argv[1], fpga::WriteOnly(a, n),
