@@ -1,8 +1,11 @@
 #include "frt/xilinx_opencl_device.h"
 
+#include <cstdlib>
+
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -10,6 +13,7 @@
 
 #include <tinyxml.h>
 #include <xclbin.h>
+#include <subprocess.hpp>
 
 #include "frt/opencl_util.h"
 #include "frt/stream_wrapper.h"
@@ -21,35 +25,23 @@ namespace internal {
 
 namespace {
 
-std::string Exec(const std::string& cmd) {
-  std::string result;
-  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"),
-                                                pclose);
-  if (pipe == nullptr) {
-    throw std::runtime_error(std::string{"cannot execute: "} + cmd);
-  }
-  int c;
-  while (c = fgetc(pipe.get()), !feof(pipe.get())) {
-    result += static_cast<char>(c);
-  }
-  return result;
-}
+void UpdateEnviron(std::string_view script,
+                   XilinxOpenclDevice::Environ& environ) {
+  subprocess::OutBuffer output = subprocess::check_output(
+      {
+          "bash",
+          "-c",
+          "source \"$0\" >/dev/null 2>&1 && env -0",
+          script,
+      },
+      subprocess::environment(environ));
 
-void UpdateEnviron(const std::string& script) {
-  std::string cmd = "source " + script + " >/dev/null 2>&1 && env -0";
-  cmd = "bash -c '" + cmd + "'";
-  const std::string envs = internal::Exec(cmd);
-  for (size_t n = 0; n < envs.size();) {
-    const std::string env = envs.c_str() + n;
-    n += env.size() + 1;
+  for (size_t n = 0; n < output.length;) {
+    std::string_view line = output.buf.data() + n;
+    n += line.size() + 1;
 
-    const auto pos = env.find('=');
-    const auto name = env.substr(0, pos);
-    const auto new_value = env.substr(pos + 1);
-    const auto old_value = getenv(name.c_str());
-    if (old_value == nullptr || new_value != old_value) {
-      setenv(name.c_str(), new_value.c_str(), /*replace=*/1);
-    }
+    auto pos = line.find('=');
+    environ[std::string(line.substr(0, pos))] = line.substr(pos + 1);
   }
 }
 
@@ -127,42 +119,8 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
   }
 
   if (const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE")) {
-    std::string xilinx_tool;
-    for (const auto env : {
-             "XILINX_VITIS",
-             "XILINX_SDX",
-             "XILINX_HLS",
-             "XILINX_VIVADO",
-         }) {
-      if (const auto value = getenv(env)) {
-        xilinx_tool = value;
-        break;
-      }
-    }
-
-    if (xilinx_tool.empty()) {
-      for (const std::string hls : {"vitis_hls", "vivado_hls"}) {
-        std::string cmd =
-            "bash -c '" + hls + " -version -help -l /dev/null 2>&-'";
-        std::istringstream lines(internal::Exec(cmd));
-        for (std::string line; getline(lines, line);) {
-          const std::string prefix = "source ";
-          const std::string suffix = "/scripts/" + hls + "/hls.tcl -notrace";
-          if (line.size() > prefix.size() + suffix.size() &&
-              line.compare(0, prefix.size(), prefix) == 0 &&
-              line.compare(line.size() - suffix.size(), suffix.size(),
-                           suffix) == 0) {
-            xilinx_tool = line.substr(
-                prefix.size(), line.size() - prefix.size() - suffix.size());
-            break;
-          }
-        }
-      }
-    }
-
-    internal::UpdateEnviron(xilinx_tool + "/settings64.sh");
-    if (const auto xrt = getenv("XILINX_XRT")) {
-      internal::UpdateEnviron(std::string(xrt) + "/setup.sh");
+    for (const auto& [name, value] : GetEnviron()) {
+      setenv(name.c_str(), value.c_str(), /* __replace = */ 1);
     }
 
     const auto uid = std::to_string(geteuid());
@@ -249,6 +207,52 @@ void XilinxOpenclDevice::ReadFromDevice() {
   } else {
     store_event_.clear();
   }
+}
+
+XilinxOpenclDevice::Environ XilinxOpenclDevice::GetEnviron() {
+  std::string xilinx_tool;
+  for (const char* env : {
+           "XILINX_VITIS",
+           "XILINX_SDX",
+           "XILINX_HLS",
+           "XILINX_VIVADO",
+       }) {
+    if (const char* value = getenv(env)) {
+      xilinx_tool = value;
+      break;
+    }
+  }
+
+  if (xilinx_tool.empty()) {
+    for (std::string hls : {"vitis_hls", "vivado_hls"}) {
+      subprocess::OutBuffer buf = subprocess::check_output({
+          "bash",
+          "-c",
+          "\"$0\" -version -help -l /dev/null 2>/dev/null",
+          hls,
+      });
+      std::istringstream lines(std::string(buf.buf.data(), buf.length));
+      for (std::string line; getline(lines, line);) {
+        std::string_view prefix = "source ";
+        std::string suffix = "/scripts/" + hls + "/hls.tcl -notrace";
+        if (line.size() > prefix.size() + suffix.size() &&
+            line.compare(0, prefix.size(), prefix) == 0 &&
+            line.compare(line.size() - suffix.size(), suffix.size(), suffix) ==
+                0) {
+          xilinx_tool = line.substr(
+              prefix.size(), line.size() - prefix.size() - suffix.size());
+          break;
+        }
+      }
+    }
+  }
+
+  Environ environ;
+  UpdateEnviron(xilinx_tool + "/settings64.sh", environ);
+  if (const char* xrt = getenv("XILINX_XRT")) {
+    UpdateEnviron(std::string(xrt) + "/setup.sh", environ);
+  }
+  return environ;
 }
 
 cl::Buffer XilinxOpenclDevice::CreateBuffer(int index, cl_mem_flags flags,

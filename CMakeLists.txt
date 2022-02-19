@@ -10,6 +10,19 @@ find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
 find_package(XRT REQUIRED)
 
+file(
+  DOWNLOAD
+  https://github.com/arun11299/cpp-subprocess/raw/v2.0/subprocess.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/include/subprocess.hpp
+  TLS_VERIFY ON
+)
+execute_process(
+  COMMAND
+    sed -i "-es/map/unordered_map/"
+    "-es/std::initializer_list<const char\\*>/std::initializer_list<std::string_view>/"
+    ${CMAKE_CURRENT_BINARY_DIR}/include/subprocess.hpp
+)
+
 set(frt_sources
     src/frt.cpp
     src/frt/arg_info.cpp
@@ -19,7 +32,7 @@ set(frt_sources
     src/frt/xilinx_opencl_stream.cpp
 )
 set(frt_compile_features
-    cxx_std_14
+    cxx_std_17
     cxx_alias_templates
     cxx_auto_type
     cxx_decltype
@@ -55,10 +68,12 @@ set_target_properties(frt_static PROPERTIES EXPORT_NAME frt)
 target_include_directories(
   frt_static
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> ${XRT_INCLUDE_DIR}
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 target_include_directories(
   frt_shared
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> ${XRT_INCLUDE_DIR}
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 target_link_libraries(
   frt_static
