@@ -36,10 +36,14 @@ jobs:
             libtinyxml-dev \
             libxext6 \
             opencl-headers \
+            python3-pip \
             unzip \
             xilinx-u250-xdma-dev \
             xilinx-u50-xdma-dev \
             xrt \
+
+          python3 -m pip install --user \
+            git+https://github.com/Licheng-Guo/tapa-fast-cosim.git@02ecd87c4d24d6513d8c0d15af8046d5ee05a2ae
       - name: Configure myself
         run: cmake -S. -Bbuild
       - name: Build myself
@@ -51,3 +55,6 @@ jobs:
           # manually sourcing the XRT setup script.
           source "${XILINX_XRT}"/setup.sh
           ctest --verbose
+      - name: Run TAPA fast cosim
+        if: ${{ matrix.xocl-version == '2020.2' }}
+        run: cmake --build build --target xdma-xosim

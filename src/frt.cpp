@@ -8,6 +8,7 @@
 #include <CL/cl2.hpp>
 
 #include "frt/intel_opencl_device.h"
+#include "frt/tapa_fast_cosim_device.h"
 #include "frt/xilinx_opencl_device.h"
 
 namespace fpga {
@@ -26,6 +27,13 @@ Instance::Instance(const std::string& bitstream) {
   }
 
   if ((device_ = internal::IntelOpenclDevice::New(binaries))) {
+    return;
+  }
+
+  if ((device_ = internal::TapaFastCosimDevice::New(
+           bitstream,
+           std::string_view(reinterpret_cast<char*>(binaries.begin()->data()),
+                            binaries.begin()->size())))) {
     return;
   }
 

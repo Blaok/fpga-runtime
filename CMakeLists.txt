@@ -12,6 +12,11 @@ find_package(XRT REQUIRED)
 
 file(
   DOWNLOAD
+  https://github.com/nlohmann/json/releases/download/v3.10.5/json.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/include/nlohmann/json.hpp
+)
+file(
+  DOWNLOAD
   https://github.com/arun11299/cpp-subprocess/raw/v2.0/subprocess.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/include/subprocess.hpp
   TLS_VERIFY ON
@@ -28,6 +33,7 @@ set(frt_sources
     src/frt/arg_info.cpp
     src/frt/intel_opencl_device.cpp
     src/frt/opencl_device.cpp
+    src/frt/tapa_fast_cosim_device.cpp
     src/frt/xilinx_opencl_device.cpp
     src/frt/xilinx_opencl_stream.cpp
 )
@@ -50,7 +56,7 @@ set(frt_compile_definitions
     CL_HPP_TARGET_OPENCL_VERSION=120
     CL_HPP_MINIMUM_OPENCL_VERSION=120
 )
-set(frt_private_link_libraries TinyXML::TinyXML)
+set(frt_private_link_libraries TinyXML::TinyXML stdc++fs)
 set(frt_public_link_libraries OpenCL::OpenCL Threads::Threads)
 
 add_library(frt_static STATIC)
