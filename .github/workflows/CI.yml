@@ -56,7 +56,12 @@ jobs:
           # Some Vitis versions have a bug where xclbinutil is not found without
           # manually sourcing the XRT setup script.
           source "${XILINX_XRT}"/setup.sh
-          ctest --verbose
+          # Vivado doesn't like running concurrently for the first time.
+          (
+            source "${XILINX_VITIS}"/settings64.sh
+            vivado -mode batch -nojournal -nolog
+          )
+          ctest --verbose --parallel $(nproc)
       - name: Run TAPA fast cosim
         if: ${{ matrix.xocl-version == '2020.2' }}
         run: cmake --build build --target xdma-xosim
