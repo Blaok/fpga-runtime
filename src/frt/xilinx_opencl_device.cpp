@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <glog/logging.h>
 #include <tinyxml.h>
 #include <xclbin.h>
 #include <subprocess.hpp>
@@ -66,7 +67,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
       setenv("XCL_EMULATION_MODE", "sw_emu", 0);
       break;
     default:
-      throw std::runtime_error("unknown xclbin mode");
+      LOG(FATAL) << "unknown xclbin mode";
   }
   target_device_name =
       reinterpret_cast<const char*>(axlf_top->m_header.m_platformVBNV);
@@ -115,7 +116,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
       setenv("XCL_EMULATION_MODE", "sw_emu", 0);
     }
   } else {
-    throw std::runtime_error("cannot determine kernel name from binary");
+    LOG(FATAL) << "cannot determine kernel name from binary";
   }
 
   if (const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE")) {
@@ -132,8 +133,8 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
     std::string tmpdir = tmpdir_or_null ? tmpdir_or_null : "/tmp";
     tmpdir += "/.frt." + uid;
     if (mkdir(tmpdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) && errno != EEXIST) {
-      throw std::runtime_error(std::string("cannot create tmpdir ") + tmpdir +
-                               ": " + strerror(errno));
+      LOG(FATAL) << "cannot create FRT tmpdir '" << tmpdir
+                 << "': " << strerror(errno);
     }
 
     // If SDACCEL_EM_RUN_DIR is not set, use a per-use tmpdir for `.run`.
@@ -164,7 +165,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
     cmd += " --od ";
     cmd += emconfig_dir;
     if (system(cmd.c_str())) {
-      throw std::runtime_error("emconfigutil failed");
+      LOG(WARNING) << "emconfigutil failed";
     }
   }
 
