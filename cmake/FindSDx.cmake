@@ -94,12 +94,12 @@ function(add_xocc_compile_target target_name)
     --create
     --use-compress-program=zstd
     --backup
-    --remove-files
     --file ${temp_dir}.tar.zst
     .)
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
+                     COMMAND rm -rf ${cwd}${temp_dir}
                      DEPENDS ${input} ${input_file}
                      VERBATIM)
 
@@ -207,12 +207,12 @@ function(add_xocc_link_target target_name)
     --create
     --use-compress-program=zstd
     --backup
-    --remove-files
     --file ${temp_dir}.tar.zst
     .)
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
+                     COMMAND rm -rf ${cwd}${temp_dir}
                      DEPENDS ${input} ${input_file}
                      VERBATIM)
 
