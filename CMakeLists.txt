@@ -25,6 +25,7 @@ execute_process(
   COMMAND
     sed -i "-es/map/unordered_map/"
     "-es/std::initializer_list<const char\\*>/std::initializer_list<std::string_view>/"
+    "-es/waitpid(pid, \\&status, WNOHANG)/waitpid(pid, \\&status, 0)/"
     ${CMAKE_CURRENT_BINARY_DIR}/include/subprocess.hpp
 )
 
