@@ -1,5 +1,6 @@
 *.sw?
-.mypy_cache
-.vscode
-build/
-include/
+/.cache
+/.mypy_cache
+/.vscode
+/build
+/compile_commands.json
