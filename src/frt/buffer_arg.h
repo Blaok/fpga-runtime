@@ -13,7 +13,7 @@ class BufferArg {
  public:
   template <typename T, Tag tag>
   BufferArg(Buffer<T, tag> buffer)
-      : ptr_(reinterpret_cast<char*>(buffer.Get())),
+      : ptr_(const_cast<char*>(reinterpret_cast<const char*>(buffer.Get()))),
         size_(sizeof(T)),
         n_(buffer.SizeInBytes() / sizeof(T)) {}
 
