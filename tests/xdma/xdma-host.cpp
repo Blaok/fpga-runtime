@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include <gflags/gflags.h>
+#include <glog/logging.h>
+
 #include "frt.h"
 
 using std::clog;
@@ -12,6 +15,8 @@ void VecAdd(const float* a, const float* b, float* c, uint64_t n);
 }
 
 int main(int argc, char* argv[]) {
+  gflags::ParseCommandLineFlags(&argc, &argv, /* remove_flags = */ true);
+
   if (argc < 3) {
     clog << "Usage: " << argv[0] << " <bitstream> <n>" << endl;
     return 1;

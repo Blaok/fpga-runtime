@@ -32,6 +32,8 @@ jobs:
             gcc-multilib \
             libc6-dev-i386 \
             libncurses5 \
+            libgflags-dev \
+            libgoogle-glog-dev \
             libtinfo5 \
             libtinyxml-dev \
             libxext6 \

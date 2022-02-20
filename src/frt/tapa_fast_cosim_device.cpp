@@ -12,9 +12,12 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include <unistd.h>
 
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 #include <nlohmann/json.hpp>
 #include <subprocess.hpp>
 
@@ -28,6 +31,11 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+DEFINE_bool(xosim_save_waveform, false, "save waveform in the work directory");
+DEFINE_string(xosim_work_dir, "",
+              "if not empty, use the specified work directory instead of a "
+              "temporary one");
+
 namespace fpga {
 namespace internal {
 
@@ -35,12 +43,16 @@ namespace {
 
 using clock = std::chrono::steady_clock;
 
-std::string CreateTempDirectory() {
+std::string GetWorkDirectory() {
+  if (!FLAGS_xosim_work_dir.empty()) {
+    LOG_IF(INFO, fs::create_directories(FLAGS_xosim_work_dir))
+        << "created work directory '" << FLAGS_xosim_work_dir << "'";
+    return fs::absolute(FLAGS_xosim_work_dir).string();
+  }
   std::string dir =
       (fs::temp_directory_path() / "tapa-fast-cosim.XXXXXX").string();
-  if (::mkdtemp(&dir[0]) == nullptr) {
-    throw std::runtime_error("failed to create temporary directory");
-  }
+  LOG_IF(FATAL, ::mkdtemp(&dir[0]) == nullptr)
+      << "failed to create work directory";
   return dir;
 }
 
@@ -59,11 +71,12 @@ std::string GetConfigPath(const std::string& work_dir) {
 }  // namespace
 
 TapaFastCosimDevice::TapaFastCosimDevice(std::string_view xo_path)
-    : xo_path(xo_path), work_dir(CreateTempDirectory()) {}
+    : xo_path(xo_path), work_dir(GetWorkDirectory()) {}
 
 TapaFastCosimDevice::~TapaFastCosimDevice() {
-  // TODO: add a flag to keep the working directory.
-  fs::remove_all(work_dir);
+  if (FLAGS_xosim_work_dir.empty()) {
+    fs::remove_all(work_dir);
+  }
 }
 
 std::unique_ptr<Device> TapaFastCosimDevice::New(std::string_view path,
@@ -99,7 +112,7 @@ void TapaFastCosimDevice::SetBufferArg(int index, Tag tag,
 }
 
 void TapaFastCosimDevice::SetStreamArg(int index, Tag tag, StreamWrapper& arg) {
-  throw std::runtime_error("TAPA fast cosim device does not support streaming");
+  LOG(FATAL) << "TAPA fast cosim device does not support streaming";
 }
 
 size_t TapaFastCosimDevice::SuspendBuffer(int index) {
@@ -145,18 +158,21 @@ void TapaFastCosimDevice::Exec() {
   }
   std::ofstream(GetConfigPath(work_dir)) << json.dump(2);
 
-  if (subprocess::call(
-          {
-              "python3",
-              "-m",
-              "tapa_fast_cosim.main",
-              "--config_path=" + GetConfigPath(work_dir),
-              "--tb_output_dir=" + work_dir + "/output",
-              "--launch_simulation",
-          },
-          subprocess::environment(XilinxOpenclDevice::GetEnviron())) != 0) {
-    throw std::runtime_error("TAPA fast cosim failed");
+  std::vector<std::string> argv = {
+      "python3",
+      "-m",
+      "tapa_fast_cosim.main",
+      "--config_path=" + GetConfigPath(work_dir),
+      "--tb_output_dir=" + work_dir + "/output",
+      "--launch_simulation",
+  };
+  if (FLAGS_xosim_save_waveform) {
+    argv.push_back("--save_waveform");
   }
+  int rc = subprocess::Popen(
+               argv, subprocess::environment(XilinxOpenclDevice::GetEnviron()))
+               .wait();
+  LOG_IF(FATAL, rc != 0) << "TAPA fast cosim failed";
 
   compute_time_ = clock::now() - tic;
 }

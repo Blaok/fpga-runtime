@@ -5,6 +5,7 @@ project(frt)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(gflags REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
@@ -57,7 +58,7 @@ set(frt_compile_definitions
     CL_HPP_TARGET_OPENCL_VERSION=120
     CL_HPP_MINIMUM_OPENCL_VERSION=120
 )
-set(frt_private_link_libraries TinyXML::TinyXML stdc++fs)
+set(frt_private_link_libraries TinyXML::TinyXML stdc++fs gflags glog)
 set(frt_public_link_libraries OpenCL::OpenCL Threads::Threads)
 
 add_library(frt_static STATIC)
@@ -154,6 +155,8 @@ string(
   ", "
   CPACK_DEBIAN_PACKAGE_DEPENDS
   "jq"
+  "libgflags2.2"
+  "libgoogle-glog0v5"
   "libtinyxml-dev"
   "ocl-icd-opencl-dev"
   "opencl-headers"
@@ -169,6 +172,8 @@ string(
   JOIN
   ", "
   CPACK_RPM_PACKAGE_REQUIRES
+  "gflags"
+  "glog"
   "jq"
   "tinyxml-devel"
   "ocl-icd-devel"
