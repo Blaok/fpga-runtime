@@ -1,0 +1,14 @@
+---
+Checks:
+  - "-*"
+  - "bugprone-*"
+  - "clang-*"
+  - "modernize-*"
+  - "performance-*"
+  - "readablity-*"
+  - "-modernize-use-trailing-return-type"
+AnalyzeTemporaryDtors: false
+FormatStyle: "file"
+CheckOptions:
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: true
