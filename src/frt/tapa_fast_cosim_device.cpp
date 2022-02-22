@@ -90,7 +90,8 @@ std::unique_ptr<Device> TapaFastCosimDevice::New(std::string_view path,
 }
 
 void TapaFastCosimDevice::SetScalarArg(int index, const void* arg, int size) {
-  std::string_view arg_str(reinterpret_cast<const char*>(arg), size);
+  std::basic_string_view<unsigned char> arg_str(
+      reinterpret_cast<const unsigned char*>(arg), size);
   std::stringstream ss;
   ss << "'h";
   // Assuming litten-endian.
