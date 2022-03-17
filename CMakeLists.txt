@@ -147,7 +147,7 @@ install(
 set(CPACK_PACKAGE_NAME libfrt-dev)
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 20220221.1)
+set(CPACK_PACKAGE_VERSION_PATCH 20220316.1)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FPGA Runtime for PCIe-Based FPGAs")
 
 string(
@@ -158,7 +158,7 @@ string(
   "libgflags2.2"
   "libgoogle-glog0v5"
   "libtinyxml-dev"
-  "ocl-icd-opencl-dev"
+  "opencl-dev"
   "opencl-headers"
   "tar"
   "zstd"
