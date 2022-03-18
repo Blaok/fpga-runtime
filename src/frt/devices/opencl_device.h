@@ -9,7 +9,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <CL/cl.h>
 #include <CL/cl2.hpp>
 
 #include "frt/arg_info.h"

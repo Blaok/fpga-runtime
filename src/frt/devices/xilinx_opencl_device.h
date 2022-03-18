@@ -7,10 +7,9 @@
 #include <string>
 #include <unordered_map>
 
-#include <CL/cl.h>
 #include <CL/cl2.hpp>
 
-#include "frt/opencl_device.h"
+#include "frt/devices/opencl_device.h"
 
 namespace fpga {
 namespace internal {

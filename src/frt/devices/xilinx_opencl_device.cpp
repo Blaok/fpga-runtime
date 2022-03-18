@@ -1,4 +1,4 @@
-#include "frt/xilinx_opencl_device.h"
+#include "frt/devices/xilinx_opencl_device.h"
 
 #include <cstdlib>
 
@@ -14,12 +14,13 @@
 #include <glog/logging.h>
 #include <tinyxml.h>
 #include <xclbin.h>
+#include <CL/cl2.hpp>
 #include <subprocess.hpp>
 
-#include "frt/opencl_util.h"
+#include "frt/devices/opencl_util.h"
+#include "frt/devices/xilinx_opencl_stream.h"
 #include "frt/stream_wrapper.h"
 #include "frt/tag.h"
-#include "frt/xilinx_opencl_stream.h"
 
 namespace fpga {
 namespace internal {

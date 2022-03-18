@@ -33,11 +33,11 @@ execute_process(
 set(frt_sources
     src/frt.cpp
     src/frt/arg_info.cpp
-    src/frt/intel_opencl_device.cpp
-    src/frt/opencl_device.cpp
-    src/frt/tapa_fast_cosim_device.cpp
-    src/frt/xilinx_opencl_device.cpp
-    src/frt/xilinx_opencl_stream.cpp
+    src/frt/devices/intel_opencl_device.cpp
+    src/frt/devices/opencl_device.cpp
+    src/frt/devices/tapa_fast_cosim_device.cpp
+    src/frt/devices/xilinx_opencl_device.cpp
+    src/frt/devices/xilinx_opencl_stream.cpp
 )
 set(frt_compile_features
     cxx_std_17
@@ -57,9 +57,13 @@ set(frt_compile_definitions
     CL_HPP_CL_1_2_DEFAULT_BUILD
     CL_HPP_TARGET_OPENCL_VERSION=120
     CL_HPP_MINIMUM_OPENCL_VERSION=120
+    CL_TARGET_OPENCL_VERSION=120
+    CL_MINIMUM_OPENCL_VERSION=120
 )
-set(frt_private_link_libraries TinyXML::TinyXML stdc++fs gflags glog)
-set(frt_public_link_libraries OpenCL::OpenCL Threads::Threads)
+set(frt_private_link_libraries
+    OpenCL::OpenCL TinyXML::TinyXML stdc++fs gflags glog
+)
+set(frt_public_link_libraries Threads::Threads)
 
 add_library(frt_static STATIC)
 add_library(frt ALIAS frt_static)
@@ -105,6 +109,7 @@ install(
   DIRECTORY "${CMAKE_SOURCE_DIR}/src/"
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FILES_MATCHING
+  PATTERN "devices" EXCLUDE
   PATTERN "*.h"
 )
 
@@ -159,7 +164,6 @@ string(
   "libgoogle-glog0v5"
   "libtinyxml-dev"
   "opencl-dev"
-  "opencl-headers"
   "tar"
   "zstd"
 )
@@ -177,7 +181,6 @@ string(
   "jq"
   "tinyxml-devel"
   "ocl-icd-devel"
-  "opencl-headers"
   "tar"
   "zstd"
 )

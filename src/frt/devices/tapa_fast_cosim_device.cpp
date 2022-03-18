@@ -1,4 +1,4 @@
-#include "frt/tapa_fast_cosim_device.h"
+#include "frt/devices/tapa_fast_cosim_device.h"
 
 #include <cstdlib>
 
@@ -21,7 +21,7 @@
 #include <nlohmann/json.hpp>
 #include <subprocess.hpp>
 
-#include "frt/xilinx_opencl_device.h"
+#include "frt/devices/xilinx_opencl_device.h"
 
 #ifdef __cpp_lib_filesystem
 #include <filesystem>

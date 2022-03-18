@@ -7,9 +7,9 @@
 
 #include <CL/cl2.hpp>
 
-#include "frt/intel_opencl_device.h"
-#include "frt/tapa_fast_cosim_device.h"
-#include "frt/xilinx_opencl_device.h"
+#include "frt/devices/intel_opencl_device.h"
+#include "frt/devices/tapa_fast_cosim_device.h"
+#include "frt/devices/xilinx_opencl_device.h"
 
 namespace fpga {
 

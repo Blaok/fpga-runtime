@@ -1,4 +1,4 @@
-#include "frt/intel_opencl_device.h"
+#include "frt/devices/intel_opencl_device.h"
 
 #include <memory>
 #include <stdexcept>
@@ -7,8 +7,9 @@
 #include <elf.h>
 
 #include <tinyxml.h>
+#include <CL/cl2.hpp>
 
-#include "frt/opencl_util.h"
+#include "frt/devices/opencl_util.h"
 #include "frt/stream_wrapper.h"
 #include "frt/tag.h"
 

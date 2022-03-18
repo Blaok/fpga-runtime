@@ -1,12 +1,11 @@
-#include "frt/xilinx_opencl_stream.h"
+#include "frt/devices/xilinx_opencl_stream.h"
 
 #include <iostream>
 #include <string>
 
-#include <CL/cl.h>
 #include <CL/cl2.hpp>
 
-#include "frt/opencl_util.h"
+#include "frt/devices/opencl_util.h"
 
 // Link against libxilinxopencl only if necessary.
 #pragma weak clCreateStream

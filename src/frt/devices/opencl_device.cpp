@@ -1,5 +1,4 @@
-#include "frt/opencl_device.h"
-#include <CL/cl.h>
+#include "frt/devices/opencl_device.h"
 
 #include <algorithm>
 #include <iostream>
@@ -7,7 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "frt/opencl_util.h"
+#include <CL/cl2.hpp>
+
+#include "frt/devices/opencl_util.h"
 
 namespace fpga {
 namespace internal {
