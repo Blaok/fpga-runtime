@@ -162,7 +162,7 @@ string(
   "jq"
   "libgflags2.2"
   "libgoogle-glog0v5"
-  "libopencl1"
+  "ocl-icd-libopencl1 | libopencl1"
   "libtinyxml2.6.2v5"
   "tar"
   "zstd"
