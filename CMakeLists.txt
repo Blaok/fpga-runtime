@@ -62,7 +62,14 @@ set(frt_compile_definitions
     CL_TARGET_OPENCL_VERSION=120
     CL_MINIMUM_OPENCL_VERSION=120
 )
-set(frt_private_link_libraries gflags glog stdc++fs tinyxml OpenCL)
+
+set(frt_private_link_libraries
+    -l:libOpenCL.so.1 # Nvidia's OpenCL doesn't have libOpenCL.so
+    gflags
+    glog
+    stdc++fs
+    tinyxml
+)
 set(frt_public_link_libraries Threads::Threads)
 
 add_library(frt_static STATIC)
@@ -146,7 +153,7 @@ install(
 set(CPACK_PACKAGE_NAME libfrt-dev)
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 20220318.1)
+set(CPACK_PACKAGE_VERSION_PATCH 20220318.2)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FPGA Runtime for PCIe-Based FPGAs")
 
 string(
@@ -154,10 +161,10 @@ string(
   ", "
   CPACK_DEBIAN_PACKAGE_DEPENDS
   "jq"
-  "libgflags2.2"
-  "libgoogle-glog0v5"
+  "libgflags-dev"
+  "libgoogle-glog-dev"
+  "libtinyxml-dev"
   "ocl-icd-libopencl1 | libopencl1"
-  "libtinyxml2.6.2v5"
   "tar"
   "zstd"
 )
