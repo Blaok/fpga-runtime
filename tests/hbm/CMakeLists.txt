@@ -6,7 +6,7 @@ target_compile_features(hbm-vadd PRIVATE cxx_auto_type)
 target_link_libraries(hbm-vadd PRIVATE frt)
 
 if(NOT XRT_PLATFORM)
-  set(XRT_PLATFORM xilinx_u50_xdma_201920_1)
+  set(XRT_PLATFORM xilinx_u280_xdma_201920_3)
 endif()
 set(KERNEL VecAdd)
 

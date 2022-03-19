@@ -34,7 +34,7 @@ jobs:
             opencl-headers \
             python3-pip \
             xilinx-u250-xdma-dev \
-            xilinx-u50-xdma-dev \
+            xilinx-u280-xdma-dev \
 
           python3 -m pip install --user \
             git+https://github.com/Licheng-Guo/tapa-fast-cosim.git@02ecd87c4d24d6513d8c0d15af8046d5ee05a2ae
