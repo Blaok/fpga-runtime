@@ -11,6 +11,8 @@ find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
 find_package(XRT REQUIRED)
 
+include_directories(SYSTEM ${XRT_INCLUDE_DIR})
+
 file(
   DOWNLOAD
   https://github.com/nlohmann/json/releases/download/v3.10.5/json.hpp
@@ -77,12 +79,12 @@ set_target_properties(frt_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(frt_static PROPERTIES EXPORT_NAME frt)
 target_include_directories(
   frt_static
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> ${XRT_INCLUDE_DIR}
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 target_include_directories(
   frt_shared
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> ${XRT_INCLUDE_DIR}
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 target_link_libraries(
