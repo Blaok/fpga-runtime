@@ -16,6 +16,7 @@ jobs:
           - 2019.2
           - 2020.2
           - 2021.1
+          - 2021.2
 
     env:
       # Cannot source Xilinx scripts because they mess up many system libraries.
