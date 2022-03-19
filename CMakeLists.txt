@@ -60,9 +60,7 @@ set(frt_compile_definitions
     CL_TARGET_OPENCL_VERSION=120
     CL_MINIMUM_OPENCL_VERSION=120
 )
-set(frt_private_link_libraries
-    OpenCL::OpenCL TinyXML::TinyXML stdc++fs gflags glog
-)
+set(frt_private_link_libraries gflags glog stdc++fs tinyxml OpenCL)
 set(frt_public_link_libraries Threads::Threads)
 
 add_library(frt_static STATIC)
@@ -137,12 +135,6 @@ install(
   COMPONENT Devel
 )
 install(
-  FILES cmake/FindTinyXML.cmake
-  RENAME TinyXMLConfig.cmake
-  DESTINATION ${ConfigPackageLocation}
-  COMPONENT Devel
-)
-install(
   FILES cmake/FindSDx.cmake
   RENAME SDxConfig.cmake
   DESTINATION ${ConfigPackageLocation}
@@ -152,7 +144,7 @@ install(
 set(CPACK_PACKAGE_NAME libfrt-dev)
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 20220317.2)
+set(CPACK_PACKAGE_VERSION_PATCH 20220318.1)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FPGA Runtime for PCIe-Based FPGAs")
 
 string(
