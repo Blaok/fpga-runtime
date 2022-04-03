@@ -21,7 +21,7 @@
 #include <nlohmann/json.hpp>
 #include <subprocess.hpp>
 
-#include "frt/devices/xilinx_opencl_device.h"
+#include "frt/devices/xilinx_environ.h"
 
 #ifdef __cpp_lib_filesystem
 #include <filesystem>
@@ -170,9 +170,9 @@ void TapaFastCosimDevice::Exec() {
   if (FLAGS_xosim_save_waveform) {
     argv.push_back("--save_waveform");
   }
-  int rc = subprocess::Popen(
-               argv, subprocess::environment(XilinxOpenclDevice::GetEnviron()))
-               .wait();
+  int rc =
+      subprocess::Popen(argv, subprocess::environment(xilinx::GetEnviron()))
+          .wait();
   LOG_IF(FATAL, rc != 0) << "TAPA fast cosim failed";
 
   compute_time_ = clock::now() - tic;

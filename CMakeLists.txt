@@ -38,6 +38,7 @@ set(frt_sources
     src/frt/devices/intel_opencl_device.cpp
     src/frt/devices/opencl_device.cpp
     src/frt/devices/tapa_fast_cosim_device.cpp
+    src/frt/devices/xilinx_environ.cpp
     src/frt/devices/xilinx_opencl_device.cpp
     src/frt/devices/xilinx_opencl_stream.cpp
 )

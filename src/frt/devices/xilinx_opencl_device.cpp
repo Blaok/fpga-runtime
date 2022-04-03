@@ -15,39 +15,15 @@
 #include <tinyxml.h>
 #include <xclbin.h>
 #include <CL/cl2.hpp>
-#include <subprocess.hpp>
 
 #include "frt/devices/opencl_util.h"
+#include "frt/devices/xilinx_environ.h"
 #include "frt/devices/xilinx_opencl_stream.h"
 #include "frt/stream_wrapper.h"
 #include "frt/tag.h"
 
 namespace fpga {
 namespace internal {
-
-namespace {
-
-void UpdateEnviron(std::string_view script,
-                   XilinxOpenclDevice::Environ& environ) {
-  subprocess::OutBuffer output = subprocess::check_output(
-      {
-          "bash",
-          "-c",
-          "source \"$0\" >/dev/null 2>&1 && env -0",
-          script,
-      },
-      subprocess::environment(environ));
-
-  for (size_t n = 0; n < output.length;) {
-    std::string_view line = output.buf.data() + n;
-    n += line.size() + 1;
-
-    auto pos = line.find('=');
-    environ[std::string(line.substr(0, pos))] = line.substr(pos + 1);
-  }
-}
-
-}  // namespace
 
 XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
   std::string target_device_name;
@@ -121,7 +97,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
   }
 
   if (const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE")) {
-    for (const auto& [name, value] : GetEnviron()) {
+    for (const auto& [name, value] : xilinx::GetEnviron()) {
       setenv(name.c_str(), value.c_str(), /* __replace = */ 1);
     }
 
@@ -209,52 +185,6 @@ void XilinxOpenclDevice::ReadFromDevice() {
   } else {
     store_event_.clear();
   }
-}
-
-XilinxOpenclDevice::Environ XilinxOpenclDevice::GetEnviron() {
-  std::string xilinx_tool;
-  for (const char* env : {
-           "XILINX_VITIS",
-           "XILINX_SDX",
-           "XILINX_HLS",
-           "XILINX_VIVADO",
-       }) {
-    if (const char* value = getenv(env)) {
-      xilinx_tool = value;
-      break;
-    }
-  }
-
-  if (xilinx_tool.empty()) {
-    for (std::string hls : {"vitis_hls", "vivado_hls"}) {
-      subprocess::OutBuffer buf = subprocess::check_output({
-          "bash",
-          "-c",
-          "\"$0\" -version -help -l /dev/null 2>/dev/null",
-          hls,
-      });
-      std::istringstream lines(std::string(buf.buf.data(), buf.length));
-      for (std::string line; getline(lines, line);) {
-        std::string_view prefix = "source ";
-        std::string suffix = "/scripts/" + hls + "/hls.tcl -notrace";
-        if (line.size() > prefix.size() + suffix.size() &&
-            line.compare(0, prefix.size(), prefix) == 0 &&
-            line.compare(line.size() - suffix.size(), suffix.size(), suffix) ==
-                0) {
-          xilinx_tool = line.substr(
-              prefix.size(), line.size() - prefix.size() - suffix.size());
-          break;
-        }
-      }
-    }
-  }
-
-  Environ environ;
-  UpdateEnviron(xilinx_tool + "/settings64.sh", environ);
-  if (const char* xrt = getenv("XILINX_XRT")) {
-    UpdateEnviron(std::string(xrt) + "/setup.sh", environ);
-  }
-  return environ;
 }
 
 cl::Buffer XilinxOpenclDevice::CreateBuffer(int index, cl_mem_flags flags,
