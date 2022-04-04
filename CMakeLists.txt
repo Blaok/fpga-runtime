@@ -174,7 +174,6 @@ string(
   JOIN
   ", "
   CPACK_DEBIAN_PACKAGE_DEPENDS
-  "jq"
   "libgflags-dev"
   "libgoogle-glog-dev"
   "libtinyxml-dev"
@@ -193,7 +192,6 @@ string(
   CPACK_RPM_PACKAGE_REQUIRES
   "gflags"
   "glog"
-  "jq"
   "tinyxml-devel"
   "ocl-icd-devel"
   "tar"

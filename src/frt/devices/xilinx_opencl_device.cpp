@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -15,12 +16,22 @@
 #include <tinyxml.h>
 #include <xclbin.h>
 #include <CL/cl2.hpp>
+#include <nlohmann/json.hpp>
+#include <subprocess.hpp>
 
 #include "frt/devices/opencl_util.h"
 #include "frt/devices/xilinx_environ.h"
 #include "frt/devices/xilinx_opencl_stream.h"
 #include "frt/stream_wrapper.h"
 #include "frt/tag.h"
+
+#ifdef __cpp_lib_filesystem
+#include <filesystem>
+namespace fs = std::filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 
 namespace fpga {
 namespace internal {
@@ -119,30 +130,52 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
 
     // If EMCONFIG_PATH is not set, use a per-user and per-device tmpdir to
     // cache `emconfig.json`.
-
-    std::string emconfig_dir;
+    fs::path emconfig_dir;
     if (const char* emconfig_dir_or_null = getenv("EMCONFIG_PATH")) {
       emconfig_dir = emconfig_dir_or_null;
     } else {
       emconfig_dir = tmpdir;
-      emconfig_dir += "/emconfig.";
-      emconfig_dir += target_device_name;
+      emconfig_dir /= "emconfig." + target_device_name;
       setenv("EMCONFIG_PATH", emconfig_dir.c_str(), 0);
     }
 
+    // Detect if emconfig already exists.
+    bool is_emconfig_ready = false;
+    if (fs::path emconfig_path = emconfig_dir / "emconfig.json";
+        fs::is_regular_file(emconfig_path)) {
+      nlohmann::json json = nlohmann::json::parse(std::ifstream(emconfig_path));
+      try {
+        for (const auto& board : json.at("Platform").at("Boards")) {
+          for (const auto& device : board.at("Devices")) {
+            if (device.at("Name") == target_device_name) {
+              is_emconfig_ready = true;
+            }
+          }
+        }
+      } catch (const nlohmann::json::out_of_range&) {
+      }
+    }
+
     // Generate `emconfig.json` when necessary.
-    std::string cmd =
-        "jq --exit-status "
-        "'.Platform.Boards[]|select(.Devices[]|select(.Name==\"";
-    cmd += target_device_name;
-    cmd += "\"))' ";
-    cmd += emconfig_dir;
-    cmd += "/emconfig.json >/dev/null 2>&1 || emconfigutil --platform ";
-    cmd += target_device_name;
-    cmd += " --od ";
-    cmd += emconfig_dir;
-    if (system(cmd.c_str())) {
-      LOG(WARNING) << "emconfigutil failed";
+    if (!is_emconfig_ready) {
+      fs::path emconfig_dir_per_pid = emconfig_dir;
+      emconfig_dir_per_pid += "." + std::to_string(getpid());
+      int return_code = subprocess::call({
+          "emconfigutil",
+          "--platform",
+          target_device_name,
+          "--od",
+          emconfig_dir_per_pid.native(),
+      });
+      LOG_IF(FATAL, return_code != 0) << "emconfigutil failed";
+
+      // Use `rename` to create the emconfig directory atomically.
+      fs::path emconfig_dir_per_pid_tmp = emconfig_dir_per_pid;
+      emconfig_dir_per_pid_tmp += ".tmp";
+      fs::create_directory_symlink(
+          emconfig_dir_per_pid.filename(),  // Use relative path for symlink.
+          emconfig_dir_per_pid_tmp);
+      fs::rename(emconfig_dir_per_pid_tmp, emconfig_dir);
     }
   }
 
