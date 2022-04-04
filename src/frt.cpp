@@ -38,7 +38,7 @@ Instance::Instance(const std::string& bitstream) {
     return;
   }
 
-  throw std::runtime_error("unexpected bitstream file");
+  LOG(FATAL) << "Unexpected bitstream file";
 }
 
 size_t Instance::SuspendBuf(int index) { return device_->SuspendBuffer(index); }

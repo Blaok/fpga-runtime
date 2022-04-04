@@ -44,7 +44,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
       setenv("XCL_EMULATION_MODE", "sw_emu", 0);
       break;
     default:
-      LOG(FATAL) << "unknown xclbin mode";
+      LOG(FATAL) << "Unknown xclbin mode";
   }
   target_device_name =
       reinterpret_cast<const char*>(axlf_top->m_header.m_platformVBNV);
@@ -93,7 +93,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
       setenv("XCL_EMULATION_MODE", "sw_emu", 0);
     }
   } else {
-    LOG(FATAL) << "cannot determine kernel name from binary";
+    LOG(FATAL) << "Cannot determine kernel name from binary";
   }
 
   if (const char* xcl_emulation_mode = getenv("XCL_EMULATION_MODE")) {
@@ -110,7 +110,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
     std::string tmpdir = tmpdir_or_null ? tmpdir_or_null : "/tmp";
     tmpdir += "/.frt." + uid;
     if (mkdir(tmpdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) && errno != EEXIST) {
-      LOG(FATAL) << "cannot create FRT tmpdir '" << tmpdir
+      LOG(FATAL) << "Cannot create FRT tmpdir '" << tmpdir
                  << "': " << strerror(errno);
     }
 

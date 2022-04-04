@@ -87,14 +87,14 @@ IntelOpenclDevice::IntelOpenclDevice(const cl::Program::Binaries& binaries) {
       }
     }
     if (kernel_names.empty() || target_device_name.empty()) {
-      throw std::runtime_error("unexpected ELF file");
+      LOG(FATAL) << "Unexpected ELF file";
     }
   } else if (data[EI_CLASS] == ELFCLASS64) {
     vendor_name = "Intel(R) FPGA Emulation Platform for OpenCL(TM)";
     target_device_name = "Intel(R) FPGA Emulation Device";
-    throw std::runtime_error("fast emulator not supported");
+    LOG(FATAL) << "Fast emulator not supported";
   } else {
-    throw std::runtime_error("unexpected ELF file");
+    LOG(FATAL) << "Unexpected ELF file";
   }
 
   Initialize(binaries, vendor_name, target_device_name, kernel_names,
@@ -111,7 +111,7 @@ std::unique_ptr<Device> IntelOpenclDevice::New(
 }
 
 void IntelOpenclDevice::SetStreamArg(int index, Tag tag, StreamWrapper& arg) {
-  throw std::runtime_error("Intel OpenCL device does not support streaming");
+  LOG(FATAL) << "Intel OpenCL device does not support streaming";
 };
 
 void IntelOpenclDevice::WriteToDevice() {

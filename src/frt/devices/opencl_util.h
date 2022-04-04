@@ -2,6 +2,7 @@
 #define FPGA_RUNTIME_OPENCL_UTIL_H_
 
 #include <CL/cl.h>
+#include <glog/logging.h>
 
 #define CASE(err) \
   case err:       \
@@ -91,13 +92,10 @@ inline const char* OpenclErrToString(cl_int err) {
 }
 #undef CASE
 
-#define CL_CHECK(err)                                                    \
-  do {                                                                   \
-    cl_int error = (err);                                                \
-    if (error != CL_SUCCESS) {                                           \
-      throw std::runtime_error(__FILE__ ":" + std::to_string(__LINE__) + \
-                               ": " + OpenclErrToString(error));         \
-    }                                                                    \
+#define CL_CHECK(err)                                               \
+  do {                                                              \
+    cl_int error = (err);                                           \
+    LOG_IF(FATAL, error != CL_SUCCESS) << OpenclErrToString(error); \
   } while (0)
 
 #endif  // FPGA_RUNTIME_OPENCL_UTIL_H_

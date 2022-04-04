@@ -200,11 +200,10 @@ void OpenclDevice::Initialize(const cl::Program::Binaries& binaries,
           return;
         }
       }
-      throw std::runtime_error("target device '" + target_device_name +
-                               "' not found");
+      LOG(FATAL) << "Target device '" << target_device_name << "' not found";
     }
   }
-  throw std::runtime_error("target platform '" + vendor_name + "' not found");
+  LOG(FATAL) << "Target platform '" + vendor_name + "' not found";
 }
 
 cl::Buffer OpenclDevice::CreateBuffer(int index, cl_mem_flags flags,

@@ -51,7 +51,7 @@ XilinxOpenclStream::XilinxOpenclStream(const std::string& name,
           ;
       break;
     default:
-      throw std::runtime_error("invalid argument");
+      LOG(FATAL) << "Invalid argument";
   }
 
   VLOG(1) << "Stream '" << name_ << "' attached to argument #" << index;
@@ -66,7 +66,7 @@ XilinxOpenclStream::XilinxOpenclStream(const std::string& name,
 
 void XilinxOpenclStream::Read(void* host_ptr, size_t size, bool eot) {
   if (stream_ == nullptr) {
-    throw std::runtime_error("cannot read from null stream");
+    LOG(FATAL) << "Cannot read from null stream";
   }
   cl_stream_xfer_req req{0};
   if (eot) {
@@ -80,7 +80,7 @@ void XilinxOpenclStream::Read(void* host_ptr, size_t size, bool eot) {
 
 void XilinxOpenclStream::Write(const void* host_ptr, size_t size, bool eot) {
   if (stream_ == nullptr) {
-    throw std::runtime_error("cannot write to null stream");
+    LOG(FATAL) << "Cannot write to null stream";
   }
   cl_stream_xfer_req req{0};
   if (eot) {
