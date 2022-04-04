@@ -1,3 +1,4 @@
+usr/bin/frt_get_xlnx_env				    libfrt-dev
 usr/include/frt.h					    libfrt-dev
 usr/include/frt/arg_info.h				    libfrt-dev
 usr/include/frt/buffer.h				    libfrt-dev
@@ -22,3 +23,5 @@ usr/lib/cmake/frt/TinyXMLConfig.cmake			    libfrt-dev
 usr/lib/cmake/frt/XRTConfig.cmake			    libfrt-dev
 usr/lib/libfrt.a					    libfrt-dev
 usr/lib/libfrt.so					    libfrt-dev
+usr/lib/x86_64-linux-gnu/libfrt.a			    libfrt-dev
+usr/lib/x86_64-linux-gnu/libfrt.so			    libfrt-dev
