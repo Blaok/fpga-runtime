@@ -106,9 +106,22 @@ target_link_libraries(
   PUBLIC ${frt_public_link_libraries}
 )
 
+add_executable(frt_get_xlnx_env)
+target_sources(
+  frt_get_xlnx_env
+  PRIVATE src/frt/devices/xilinx_environ.cpp src/frt_get_xlnx_env.cpp
+)
+target_compile_features(frt_get_xlnx_env PRIVATE cxx_std_17)
+target_include_directories(
+  frt_get_xlnx_env PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
+)
+target_link_libraries(
+  frt_get_xlnx_env PRIVATE Threads::Threads -static-libgcc -static-libstdc++
+)
+
 include(GNUInstallDirs)
 install(
-  TARGETS frt_static frt_shared
+  TARGETS frt_static frt_shared frt_get_xlnx_env
   EXPORT FRTTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
