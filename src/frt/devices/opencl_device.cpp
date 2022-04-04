@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include <glog/logging.h>
 #include <CL/cl2.hpp>
 
 #include "frt/devices/opencl_util.h"
@@ -155,14 +156,14 @@ void OpenclDevice::Initialize(const cl::Program::Binaries& binaries,
   for (const auto& platform : platforms) {
     std::string platformName = platform.getInfo<CL_PLATFORM_NAME>(&err);
     CL_CHECK(err);
-    std::clog << "INFO: Found platform: " << platformName.c_str() << std::endl;
+    LOG(INFO) << "Found platform: " << platformName.c_str();
     if (platformName == vendor_name) {
       std::vector<cl::Device> devices;
       CL_CHECK(platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &devices));
       for (const auto& device : devices) {
         const std::string device_name = device.getInfo<CL_DEVICE_NAME>(&err);
         CL_CHECK(err);
-        std::clog << "INFO: Found device: " << device_name << std::endl;
+        LOG(INFO) << "Found device: " << device_name;
         // Intel devices contain a std::string that is unavailable from the
         // binary.
         bool is_target_device = false;
@@ -170,12 +171,11 @@ void OpenclDevice::Initialize(const cl::Program::Binaries& binaries,
         is_target_device = device_name == target_device_name ||
                            device_name.substr(0, prefix.size()) == prefix;
         if (is_target_device) {
-          std::clog << "INFO: Using " << device_name << std::endl;
+          LOG(INFO) << "Using " << device_name;
           device_ = device;
           context_ = cl::Context(device, nullptr, nullptr, nullptr, &err);
           if (err == CL_DEVICE_NOT_AVAILABLE) {
-            std::clog << "WARNING: Device '" << device_name << "' not available"
-                      << std::endl;
+            LOG(WARNING) << "Device '" << device_name << "' not available";
             continue;
           }
           CL_CHECK(err);

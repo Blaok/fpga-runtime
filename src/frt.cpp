@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+#include <glog/logging.h>
 #include <CL/cl2.hpp>
 
 #include "frt/devices/intel_opencl_device.h"
@@ -14,7 +15,7 @@
 namespace fpga {
 
 Instance::Instance(const std::string& bitstream) {
-  std::clog << "INFO: Loading " << bitstream << std::endl;
+  LOG(INFO) << "Loading " << bitstream;
   cl::Program::Binaries binaries;
   {
     std::ifstream stream(bitstream, std::ios::binary);
@@ -86,6 +87,13 @@ double Instance::LoadThroughputGbps() {
 double Instance::StoreThroughputGbps() {
   return static_cast<double>(device_->StoreBytes()) /
          static_cast<double>(StoreTimeNanoSeconds());
+}
+
+void Instance::ConditionallyFinish(bool has_stream) {
+  if (!has_stream) {
+    VLOG(1) << "no stream found; waiting for command to finish";
+    Finish();
+  }
 }
 
 }  // namespace fpga

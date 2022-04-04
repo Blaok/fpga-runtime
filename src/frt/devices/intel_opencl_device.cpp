@@ -6,6 +6,7 @@
 
 #include <elf.h>
 
+#include <glog/logging.h>
 #include <tinyxml.h>
 #include <CL/cl2.hpp>
 
@@ -68,7 +69,7 @@ IntelOpenclDevice::IntelOpenclDevice(const cl::Program::Binaries& binaries) {
                 arg.cat = ArgInfo::kMmap;
                 break;
               default:
-                std::clog << "WARNING: Unknown argument category: " << cat;
+                LOG(WARNING) << "Unknown argument category: " << cat;
             }
           }
         }

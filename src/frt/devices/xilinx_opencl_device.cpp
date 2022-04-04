@@ -82,7 +82,7 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
             arg.cat = ArgInfo::kStream;
             break;
           default:
-            std::clog << "WARNING: Unknown argument category: " << cat;
+            LOG(WARNING) << "Unknown argument category: " << cat;
         }
       }
     }

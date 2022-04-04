@@ -114,13 +114,7 @@ class Instance {
         has_stream |=
         std::is_base_of<internal::StreamWrapper,
                         typename std::remove_reference<Args>::type>::value)...};
-    if (!has_stream) {
-#ifndef NDEBUG
-      std::clog << "DEBUG: no stream found; waiting for command to finish"
-                << std::endl;
-#endif
-      Finish();
-    }
+    ConditionallyFinish(has_stream);
     return *this;
   }
 
@@ -157,6 +151,8 @@ class Instance {
     SetArg(index, std::forward<T>(arg));
     SetArg(index + 1, std::forward<Args>(other_args)...);
   }
+
+  void ConditionallyFinish(bool has_stream);
 
   std::unique_ptr<internal::Device> device_;
 };

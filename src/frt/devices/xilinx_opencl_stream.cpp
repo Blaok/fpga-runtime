@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 
+#include <glog/logging.h>
 #include <CL/cl2.hpp>
 
 #include "frt/devices/opencl_util.h"
@@ -20,7 +21,7 @@ XilinxOpenclStream::~XilinxOpenclStream() {
   if (stream_ != nullptr) {
     auto err = clReleaseStream(stream_);
     if (err != CL_SUCCESS) {
-      std::clog << "ERROR: clReleaseStream: " << OpenclErrToString(err);
+      LOG(ERROR) << "clReleaseStream: " << OpenclErrToString(err);
     }
   }
 }
@@ -53,10 +54,7 @@ XilinxOpenclStream::XilinxOpenclStream(const std::string& name,
       throw std::runtime_error("invalid argument");
   }
 
-#ifndef NDEBUG
-  std::clog << "DEBUG: Stream '" << name_ << "' attached to argument #" << index
-            << std::endl;
-#endif
+  VLOG(1) << "Stream '" << name_ << "' attached to argument #" << index;
   cl_mem_ext_ptr_t ext;
   ext.flags = index;
   ext.param = kernel_.get();
