@@ -55,36 +55,36 @@ std::vector<ArgInfo> Instance::GetArgsInfo() const {
   return device_->GetArgsInfo();
 }
 
-int64_t Instance::LoadTimeNanoSeconds() {
+int64_t Instance::LoadTimeNanoSeconds() const {
   return device_->LoadTimeNanoSeconds();
 }
 
-int64_t Instance::ComputeTimeNanoSeconds() {
+int64_t Instance::ComputeTimeNanoSeconds() const {
   return device_->ComputeTimeNanoSeconds();
 }
 
-int64_t Instance::StoreTimeNanoSeconds() {
+int64_t Instance::StoreTimeNanoSeconds() const {
   return device_->StoreTimeNanoSeconds();
 }
 
-double Instance::LoadTimeSeconds() {
+double Instance::LoadTimeSeconds() const {
   return static_cast<double>(LoadTimeNanoSeconds()) * 1e-9;
 }
 
-double Instance::ComputeTimeSeconds() {
+double Instance::ComputeTimeSeconds() const {
   return static_cast<double>(ComputeTimeNanoSeconds()) * 1e-9;
 }
 
-double Instance::StoreTimeSeconds() {
+double Instance::StoreTimeSeconds() const {
   return static_cast<double>(StoreTimeNanoSeconds()) * 1e-9;
 }
 
-double Instance::LoadThroughputGbps() {
+double Instance::LoadThroughputGbps() const {
   return static_cast<double>(device_->LoadBytes()) /
          static_cast<double>(LoadTimeNanoSeconds());
 }
 
-double Instance::StoreThroughputGbps() {
+double Instance::StoreThroughputGbps() const {
   return static_cast<double>(device_->StoreBytes()) /
          static_cast<double>(StoreTimeNanoSeconds());
 }

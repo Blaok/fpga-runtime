@@ -122,28 +122,28 @@ class Instance {
   std::vector<ArgInfo> GetArgsInfo() const;
 
   // Returns the load time in nanoseconds.
-  int64_t LoadTimeNanoSeconds();
+  int64_t LoadTimeNanoSeconds() const;
 
   // Returns the compute time in nanoseconds.
-  int64_t ComputeTimeNanoSeconds();
+  int64_t ComputeTimeNanoSeconds() const;
 
   // Returns the store time in nanoseconds.
-  int64_t StoreTimeNanoSeconds();
+  int64_t StoreTimeNanoSeconds() const;
 
   // Returns the load time in seconds.
-  double LoadTimeSeconds();
+  double LoadTimeSeconds() const;
 
   // Returns the compute time in seconds.
-  double ComputeTimeSeconds();
+  double ComputeTimeSeconds() const;
 
   // Returns the store time in seconds.
-  double StoreTimeSeconds();
+  double StoreTimeSeconds() const;
 
   // Returns the load throughput in GB/s.
-  double LoadThroughputGbps();
+  double LoadThroughputGbps() const;
 
   // Returns the store throughput in GB/s.
-  double StoreThroughputGbps();
+  double StoreThroughputGbps() const;
 
  private:
   template <typename T, typename... Args>
