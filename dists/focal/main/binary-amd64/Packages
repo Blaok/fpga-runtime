@@ -338,3 +338,20 @@ SHA256: 09ec9aea9d4a88a3b9bc27e22a25264f702a7049fa996e296ee911694ab72a63
 SHA512: 535132051c0b7f768abeaf2901a736cc24a8273f7983127ce3605b59aa954bd66e93c0cfe3801a0a398313267d4892e31df50e16bfa495d5cf5ade186e71eb2c
 Description: FPGA Runtime for PCIe-Based FPGAs
 
+Package: libfrt-dev
+Architecture: amd64
+Version: 0.0.20220407.1
+Priority: optional
+Section: devel
+Maintainer: Blaok Chi
+Installed-Size: 3186
+Depends: libgflags-dev, libgoogle-glog-dev, libtinyxml-dev, ocl-icd-libopencl1 | libopencl1, tar, zstd
+Recommends: csh, xrt
+Filename: pool/main/focal/libfrt-dev_0.0.20220407.1_amd64.deb
+Size: 925678
+MD5sum: 20616f4012b74907dba89972482be485
+SHA1: e23a25a5f4dc08a9c410100f374a1bcb8e32aa97
+SHA256: 2dada3164862ce6a8d5e825a5436fb597fdbadfce5353915fbe010045a8d6514
+SHA512: 2720f6a3e7054ae6733090cc65dac28681d797dd4de46da3a035dded17b4e5a5e577a174e06d12e58381f4ac7d827561d8734ebc03ef0760bdd6fe9bce356f5b
+Description: FPGA Runtime for PCIe-Based FPGAs
+
