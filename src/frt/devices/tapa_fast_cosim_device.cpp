@@ -71,7 +71,9 @@ std::string GetConfigPath(const std::string& work_dir) {
 }  // namespace
 
 TapaFastCosimDevice::TapaFastCosimDevice(std::string_view xo_path)
-    : xo_path(fs::absolute(xo_path)), work_dir(GetWorkDirectory()) {}
+    : xo_path(fs::absolute(xo_path)), work_dir(GetWorkDirectory()) {
+  LOG(INFO) << "Running hardware simulation with TAPA fast cosim";
+}
 
 TapaFastCosimDevice::~TapaFastCosimDevice() {
   if (FLAGS_xosim_work_dir.empty()) {

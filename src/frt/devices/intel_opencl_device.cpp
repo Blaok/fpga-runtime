@@ -73,15 +73,18 @@ IntelOpenclDevice::IntelOpenclDevice(const cl::Program::Binaries& binaries) {
             }
           }
         }
+        LOG(INFO) << "Running on-board execution with Intel OpenCL";
       } else if (strcmp(section_name, ".acl.board") == 0) {
         const std::string board_name(reinterpret_cast<const char*>(elf_header) +
                                          section_header->sh_offset,
                                      section_header->sh_size);
         if (board_name == "EmulatorDevice") {
           setenv("CL_CONTEXT_EMULATOR_DEVICE_INTELFPGA", "1", 0);
+          LOG(INFO) << "Running hardware simulation with Intel OpenCL";
         }
         if (board_name == "SimulatorDevice") {
           setenv("CL_CONTEXT_MPSIM_DEVICE_INTELFPGA", "1", 0);
+          LOG(INFO) << "Running software simulation with Intel OpenCL";
         }
         target_device_name = board_name;
       }

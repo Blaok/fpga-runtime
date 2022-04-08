@@ -177,6 +177,15 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
           emconfig_dir_per_pid_tmp);
       fs::rename(emconfig_dir_per_pid_tmp, emconfig_dir);
     }
+    if (xcl_emulation_mode == std::string_view("sw_emu")) {
+      LOG(INFO) << "Running software simulation with Xilinx OpenCL";
+    } else if (xcl_emulation_mode == std::string_view("hw_emu")) {
+      LOG(INFO) << "Running hardware simulation with Xilinx OpenCL";
+    } else {
+      LOG(FATAL) << "Unexpected XCL_EMULATION_MODE: " << xcl_emulation_mode;
+    }
+  } else {
+    LOG(INFO) << "Running on-board execution with Xilinx OpenCL";
   }
 
   Initialize(binaries, "Xilinx", target_device_name, kernel_names,
