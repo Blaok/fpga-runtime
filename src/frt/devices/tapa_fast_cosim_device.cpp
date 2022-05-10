@@ -31,6 +31,7 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+DEFINE_bool(xosim_start_gui, false, "start Vivado GUI for simulation");
 DEFINE_bool(xosim_save_waveform, false, "save waveform in the work directory");
 DEFINE_string(xosim_work_dir, "",
               "if not empty, use the specified work directory instead of a "
@@ -169,6 +170,9 @@ void TapaFastCosimDevice::Exec() {
       "--tb_output_dir=" + work_dir + "/output",
       "--launch_simulation",
   };
+  if (FLAGS_xosim_start_gui) {
+    argv.push_back("--start_gui");
+  }
   if (FLAGS_xosim_save_waveform) {
     argv.push_back("--save_waveform");
   }
