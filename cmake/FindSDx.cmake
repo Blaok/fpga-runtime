@@ -3,6 +3,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_program(XOCC NAMES v++ xocc PATHS "$ENV{XILINX_VITIS}/bin" "$ENV{XILINX_SDX}/bin")
+find_program(VPP_WRAPPER frt_vpp_wrapper)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SDx
@@ -62,22 +63,22 @@ function(add_xocc_compile_target target_name)
   get_filename_component(temp_dir ${temp_dir} ABSOLUTE)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
-  execute_process(COMMAND id -uz OUTPUT_VARIABLE cwd)
-  set(cwd /tmp/cmake.xocc.${cwd})
 
   # compose the xocc compile command
-  set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
-  list(APPEND xocc_cmd "mkdir;-p;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
-  list(APPEND xocc_cmd "cd;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
+  if (VPP_WRAPPER)
+    set(xocc_cmd ${VPP_WRAPPER})
+  else()
+    set(xocc_cmd "")
+  endif()
   list(APPEND xocc_cmd ${XOCC} --compile)
-  list(APPEND xocc_cmd --output ${cwd}${output})
+  list(APPEND xocc_cmd --output ${output})
   list(APPEND xocc_cmd --kernel ${kernel})
   list(APPEND xocc_cmd --platform ${platform})
   list(APPEND xocc_cmd --target ${target})
   list(APPEND xocc_cmd --report_level 2)
   list(APPEND xocc_cmd --report_dir ${report_dir})
   list(APPEND xocc_cmd --log_dir ${log_dir})
-  list(APPEND xocc_cmd --temp_dir ${cwd}${temp_dir})
+  list(APPEND xocc_cmd --temp_dir=${temp_dir})
   list(APPEND xocc_cmd --xp prop:kernel.${kernel}.kernel_flags=-std=c++11)
   if(CMAKE_BUILD_TYPE MATCHES Debug)
     list(APPEND xocc_cmd --debug)
@@ -87,19 +88,9 @@ function(add_xocc_compile_target target_name)
   endif()
   list(APPEND xocc_cmd ${input_file})
   list(APPEND xocc_cmd ${XOCC_COMPILE_UNPARSED_ARGUMENTS})
-  list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
-  list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
-  list(APPEND xocc_cmd && tar
-    --directory ${cwd}${temp_dir}
-    --create
-    --use-compress-program=zstd
-    --backup
-    --file ${temp_dir}.tar.zst
-    .)
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
-                     COMMAND rm -rf ${cwd}${temp_dir}
                      DEPENDS ${input} ${input_file}
                      VERBATIM)
 
@@ -171,22 +162,21 @@ function(add_xocc_link_target target_name)
   get_filename_component(temp_dir ${temp_dir} ABSOLUTE)
   get_filename_component(input_file ${input_file} ABSOLUTE)
 
-  execute_process(COMMAND id -uz OUTPUT_VARIABLE cwd)
-  set(cwd /tmp/cmake.xocc.${cwd})
-
   # compose the xocc link command
-  set(xocc_cmd "ln;-fns;${cwd}${temp_dir};${temp_dir};&&")
-  list(APPEND xocc_cmd "mkdir;-p;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
-  list(APPEND xocc_cmd "cd;${cwd}${CMAKE_CURRENT_BINARY_DIR};&&")
-  list(APPEND xocc_cmd env LC_ALL=C ${XOCC} --link)
-  list(APPEND xocc_cmd --output ${cwd}${output})
+  if (VPP_WRAPPER)
+    set(xocc_cmd ${VPP_WRAPPER})
+  else()
+    set(xocc_cmd "")
+  endif()
+  list(APPEND xocc_cmd ${XOCC} --link)
+  list(APPEND xocc_cmd --output ${output})
   list(APPEND xocc_cmd --kernel ${kernel})
   list(APPEND xocc_cmd --platform ${platform})
   list(APPEND xocc_cmd --target ${target})
   list(APPEND xocc_cmd --report_level 2)
   list(APPEND xocc_cmd --report_dir ${report_dir})
   list(APPEND xocc_cmd --log_dir ${log_dir})
-  list(APPEND xocc_cmd --temp_dir ${cwd}${temp_dir})
+  list(APPEND xocc_cmd --temp_dir=${temp_dir})
   list(APPEND xocc_cmd --optimize ${optimize})
   list(APPEND xocc_cmd --connectivity.nk ${kernel}:1:${kernel})
   foreach(map ${dram_mapping})
@@ -200,19 +190,9 @@ function(add_xocc_link_target target_name)
   endif()
   list(APPEND xocc_cmd ${input_file})
   list(APPEND xocc_cmd ${XOCC_LINK_UNPARSED_ARGUMENTS})
-  list(APPEND xocc_cmd "&&;test;${cwd}${output};-nt;${input_file}")
-  list(APPEND xocc_cmd "&&;mv;-bfT;${cwd}${output};${output}")
-  list(APPEND xocc_cmd && tar
-    --directory ${cwd}${temp_dir}
-    --create
-    --use-compress-program=zstd
-    --backup
-    --file ${temp_dir}.tar.zst
-    .)
 
   add_custom_command(OUTPUT ${output}
                      COMMAND ${xocc_cmd}
-                     COMMAND rm -rf ${cwd}${temp_dir}
                      DEPENDS ${input} ${input_file}
                      VERBATIM)
 

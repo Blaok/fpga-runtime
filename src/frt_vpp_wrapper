@@ -1,0 +1,231 @@
+#!/bin/bash
+#
+# This is a drop-in replacement `v++` wrapper that moves the `--temp_dir` to a
+# local filesystem when possible.
+#
+# This script is designed to avoid remote filesystem I/O and thus improve run
+# time considerably, without changing the user experience significantly.
+#
+# If `--temp_dir=/path/to/dir` is specified and `/path/to/dir` is on a remote
+# filesystem (e.g., ceph, cifs, or nfs), this script will try to create a local
+# temporary directory using `mktemp`, bind-mount that directory (using
+# `mount --bind` or `bindfs`), and pack the results to `/path/to/dir.sqfs`
+# using `mksquashfs`. If possible, this script will also try to mount the packed
+# squashfs to `/path/to/dir`. Note that `--temp_dir /path/to/dir` does not
+# trigger this optimization. If `--temp_dir /path/to/dir1` and
+# `--temp_dir=/path/to/dir2` are mixed, the last `--temp_dir=` takes precedence,
+# but it may not be honored by the wrapped command.
+#
+# The exit code is designed to always reflect the result of the wrapped command.
+#
+# Possible outcomes from this script:
+#   1)  No behavior is modified, if `--temp_dir` is not specified, or
+#       `--temp_dir` is specified using ' ' as the separator, instead of '=', or
+#       the local temporary directory cannot be efficiently packed and saved,
+#       e.g., `mksquashfs` is unavailable, or `/path/to/dir.sqfs` is not
+#       writable.
+#   2)  `temp_dir` is successfully packed to `/path/to/dir.sqfs`, and
+#       `/path/to/dir` is mounted read-only from `/path/to/dir.sqfs`. The
+#       wrapped command may or may not succeed. The local temporary directory is
+#       removed.
+#   3)  `temp_dir` is successfully packed, but `/path/to/dir` is not mounted
+#       from `/path/to/dir.sqfs`. The wrapped command may or may not succeed. In
+#       this case, the user may mount it manually (recommended), or `unsquashfs`
+#       it (not recommended). The local temporary directory is removed. This can
+#       happen, e.g., if `squashfuse` is unavailable.
+#   4)  `temp_dir` cannot be packed successfully. The local temporary directory
+#       is kept as-is. This is not supposed to happen unless the state of system
+#       changes while the wrapped command was running.
+
+set -e
+
+declare -r log_prefix='${BASHPID} ${BASH_SOURCE##*/}:${LINENO}]'
+declare -r log_datetime='$(date +"%m%d %T.%N")'
+declare -r verbose_ps4="+ I\D{%m%d %T} ${log_prefix} "
+declare stderr_fd
+declare temp_dir
+declare local_temp_dir
+declare sid
+
+shopt -s expand_aliases
+alias log_info="log \"I${log_datetime} ${log_prefix}\""
+alias log_warning="log \"W${log_datetime} ${log_prefix}\""
+alias log_error="log \"E${log_datetime} ${log_prefix}\""
+
+function log() {
+  echo -e "$@" >&${stderr_fd}
+}
+
+# May set `temp_dir` globally.
+function parse_temp_dir() {
+  local arg
+  local stripped_arg
+  for arg in "$@"; do
+    stripped_arg="${arg#--temp_dir=}"
+    if [[ "${arg}" != "${stripped_arg}" ]]; then
+      temp_dir="${stripped_arg}"
+    fi
+  done
+}
+
+function is_network_filesystem() {
+  local fstype
+  fstype="$(stat "$1" --file-system --format=%T)"
+
+  # Try to unmount a previously mounted squashfs.
+  case "${fstype}" in
+  squashfs | fuseblk)
+    if umount -l "$1" || fusermount -uz "$1"; then
+      fstype="$(stat "$1" --file-system --format=%T)"
+    fi
+    ;;
+  esac
+  readonly fstype
+
+  case "${fstype}" in
+  acfs | \
+    afs | \
+    ceph | \
+    cifs | \
+    coda | \
+    fhgfs | \
+    gfs/gfs2 | \
+    gpfs | \
+    ibrix | \
+    k-afs | \
+    lustre | \
+    novell | \
+    nfs | \
+    ocfs2 | \
+    panfs | \
+    prl_fs | \
+    smb | \
+    smb2 | \
+    snfs)
+    log_info "temp_dir '$1' is on a ${fstype} filesystem"
+    return 0
+    ;;
+  esac
+  return 1
+}
+
+function push_xtrace() {
+  local trap_cmd
+  trap_cmd="PS4=${PS4@Q}"
+  if [[ ! -o xtrace ]]; then
+    trap_cmd="set +x; ${trap_cmd}"
+  fi
+  echo "${trap_cmd}"
+}
+
+function clean_up() {
+  trap "$(push_xtrace)" RETURN
+  PS4="${verbose_ps4}"
+  set -x
+
+  kill -9 $(ps --sid "${sid}" --format pid=) || true
+
+  if [[ -n "${temp_dir}" ]]; then
+    declare -r temp_sqfs="${temp_dir}.sqfs"
+    if mksquashfs "${local_temp_dir}" "${temp_sqfs}" -noappend; then
+      rm -rf "${local_temp_dir}" || true
+      log_info \
+        "temp_dir '${temp_dir}' is packed as '${temp_dir}.sqfs'," \
+        "which can be manually mounted using one of the following commands:\n" \
+        " sudo mount ${temp_sqfs@Q} ${temp_dir@Q}\n" \
+        " squashfuse -o allow_other ${temp_sqfs@Q} ${temp_dir@Q}\n" \
+        " squashfuse ${temp_sqfs@Q} ${temp_dir@Q}"
+      if umount -l "${temp_dir}" || fusermount -uz "${temp_dir}"; then
+        if mount "${temp_sqfs}" "${temp_dir}" ||
+          squashfuse -o allow_other "${temp_sqfs}" "${temp_dir}" ||
+          squashfuse "${temp_sqfs}" "${temp_dir}"; then
+          log_info "temp_dir '${temp_dir}' is mounted read-only from '${temp_dir}.sqfs'"
+        fi
+      else
+        log_warning "failed to unmount ${temp_dir}"
+        return 0
+      fi
+    fi
+  else
+    rm -rf "${local_temp_dir}" || true
+  fi
+
+}
+
+function wrap() {
+  trap "$(push_xtrace)" RETURN
+  PS4="${verbose_ps4}"
+  set -x
+
+  mkdir --parent "${temp_dir}"
+  if is_network_filesystem "${temp_dir}"; then
+    local_temp_dir="$(mktemp --directory --suffix=.frt_vpp_wrapper)"
+    readonly local_temp_dir
+
+    if ! mksquashfs -version; then
+      log_warning "not binding temp_dir due to the lack of 'squashfs-tools'"
+      unset temp_dir
+      return 0
+    fi
+
+    declare -r temp_sqfs="${temp_dir}.sqfs"
+    if ! touch "${temp_sqfs}" || [[ ! -w "${temp_sqfs}" ]]; then
+      log_warning "not binding temp_dir because '${temp_dir}.sqfs' is not writable"
+      unset temp_dir
+      return 0
+    fi
+
+    if mount --bind "${local_temp_dir}" "${temp_dir}" ||
+      bindfs "${local_temp_dir}" "${temp_dir}" ||
+      bindfs --no-allow-other "${local_temp_dir}" "${temp_dir}"; then
+      log_info \
+        "temp_dir '${temp_dir}' is bound from '${local_temp_dir}'" \
+        "to speedup I/O"
+    else
+      log_warning \
+        "failed to mount '${temp_dir}' on a local filesystem;" \
+        "I/O can be very slow"
+      unset temp_dir
+    fi
+  fi
+  return 0
+}
+
+function prepare() {
+  exec {stderr_fd}>&2
+  parse_temp_dir "$@"
+  if [[ -n "${temp_dir}" ]]; then
+    if [[ -o xtrace ]]; then
+      if [[ -z "${BASH_XTRACEFD}" ]]; then
+        BASH_XTRACEFD=2
+      fi
+    else
+      if ! exec {BASH_XTRACEFD}>"${temp_dir}.frt_vpp_wrapper.log"; then
+        log_warning "failed to log details to '${temp_dir}.frt_vpp_wrapper.log'"
+        exec {BASH_XTRACEFD}>/dev/null
+      fi
+    fi
+    wrap >&${BASH_XTRACEFD} 2>&1
+  fi
+  trap "clean_up >&${BASH_XTRACEFD} 2>&1" SIGINT SIGTERM SIGPIPE SIGCHLD EXIT
+}
+
+function main() {
+  prepare "$@" || true
+
+  # The wrapped command often have dangling processes writing `temp_dir` after
+  # the main process exits, so we wait for all subprocesses. Some versions of
+  # the wrapped command crashes on non-C locales, thus we force the locale
+  # settings here.
+  setsid env LC_ALL=C "$@" &
+  sid=$!
+  wait "${sid}"
+  local -a pids
+  while pids=($(ps --sid "${sid}" --format pid=)) && ((${#pids[@]})); do
+    # The first process may disappear just before `tail`, but there can be
+    # others left dangling, so we ignore errors here.
+    tail /dev/null --follow --pid="${pids[1]}" || true
+  done
+}
+
+main "$@"

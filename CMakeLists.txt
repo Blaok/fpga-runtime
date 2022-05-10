@@ -4,6 +4,7 @@ cmake_policy(SET CMP0076 NEW)
 project(frt)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+list(APPEND CMAKE_PROGRAM_PATH "${CMAKE_CURRENT_LIST_DIR}/src")
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(gflags REQUIRED)
 find_package(Threads REQUIRED)
@@ -133,6 +134,10 @@ install(
   PATTERN "devices" EXCLUDE
   PATTERN "*.h"
 )
+install(
+  PROGRAMS "${CMAKE_SOURCE_DIR}/src/frt_vpp_wrapper"
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 export(
   EXPORT FRTTargets
@@ -174,14 +179,26 @@ string(
   JOIN
   ", "
   CPACK_DEBIAN_PACKAGE_DEPENDS
+  "bash"
+  "coreutils"
+  "fuse" # for `fusermount`
   "libgflags-dev"
   "libgoogle-glog-dev"
   "libtinyxml-dev"
   "ocl-icd-libopencl1 | libopencl1"
-  "tar"
-  "zstd"
+  "procps" # for `ps`
+  "util-linux" # for `setsid`
 )
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "csh, xrt")
+string(
+  JOIN
+  ", "
+  CPACK_DEBIAN_PACKAGE_RECOMMENDS
+  "bindfs"
+  "csh"
+  "squashfs-tools"
+  "squashfuse"
+  "xrt"
+)
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Blaok Chi")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
@@ -190,12 +207,15 @@ string(
   JOIN
   ", "
   CPACK_RPM_PACKAGE_REQUIRES
+  "bash"
+  "coreutils"
+  "fuse" # for `fusermount`
   "gflags"
   "glog"
-  "tinyxml-devel"
   "ocl-icd-devel"
-  "tar"
-  "zstd"
+  "procps-ng" # for `ps`
+  "tinyxml-devel"
+  "util-linux" # for `setsid`
 )
 set(CPACK_RPM_PACKAGE_NAME frt-devel)
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
