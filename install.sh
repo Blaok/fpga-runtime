@@ -12,10 +12,13 @@ function install-frt-for-ubuntu() {
   sudo apt-get update
   sudo apt-get install -y apt-transport-https gnupg wget
 
+  wget -O- https://about.blaok.me/fpga-runtime/frt.gpg.key | gpg --dearmor |
+    sudo tee /usr/share/keyrings/.frt.gpg.tmp >/dev/null
+  sudo mv /usr/share/keyrings/.frt.gpg.tmp /usr/share/keyrings/frt.gpg
   sudo tee /etc/apt/sources.list.d/frt.list <<EOF
-deb [arch=amd64] https://about.blaok.me/fpga-runtime ${codename} main
+deb [arch=amd64 signed-by=/usr/share/keyrings/frt.gpg] https://about.blaok.me/fpga-runtime ${codename} main
 EOF
-  wget -O - https://about.blaok.me/fpga-runtime/frt.gpg.key | sudo apt-key add -
+  sudo apt-key del A3DB8B24636B33EE || true
 
   sudo apt-get update
   sudo apt-get install -y libfrt-dev
