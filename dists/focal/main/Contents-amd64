@@ -1,4 +1,5 @@
 usr/bin/frt_get_xlnx_env				    libfrt-dev
+usr/bin/frt_vpp_wrapper					    libfrt-dev
 usr/include/frt.h					    libfrt-dev
 usr/include/frt/arg_info.h				    libfrt-dev
 usr/include/frt/buffer.h				    libfrt-dev
