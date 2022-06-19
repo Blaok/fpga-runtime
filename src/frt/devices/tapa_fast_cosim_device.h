@@ -52,6 +52,7 @@ class TapaFastCosimDevice : public Device {
  private:
   std::unordered_map<int, std::string> scalars_;
   std::unordered_map<int, BufferArg> buffer_table_;
+  std::vector<ArgInfo> args_;
   std::unordered_set<int> load_indices_;
   std::unordered_set<int> store_indices_;
 

@@ -14,13 +14,16 @@
 #include <unordered_map>
 #include <vector>
 
+#include <tinyxml.h>
 #include <unistd.h>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <nlohmann/json.hpp>
 #include <subprocess.hpp>
+#include <zip_file.hpp>
 
+#include "frt/arg_info.h"
 #include "frt/devices/xilinx_environ.h"
 
 #ifdef __cpp_lib_filesystem
@@ -73,6 +76,49 @@ std::string GetConfigPath(const std::string& work_dir) {
 
 TapaFastCosimDevice::TapaFastCosimDevice(std::string_view xo_path)
     : xo_path(fs::absolute(xo_path)), work_dir(GetWorkDirectory()) {
+  miniz_cpp::zip_file xo_file = this->xo_path;
+  std::string kernel_xml;
+  for (auto& info : xo_file.infolist()) {
+    constexpr std::string_view kSuffix = "/kernel.xml";
+    if (info.filename.size() >= kSuffix.size() &&
+        std::equal(kSuffix.rbegin(), kSuffix.rend(), info.filename.rbegin())) {
+      kernel_xml = xo_file.read(info);
+      break;
+    }
+  }
+  LOG_IF(FATAL, kernel_xml.empty())
+      << "Missing 'kernel.xml' in '" << xo_path << "'";
+
+  TiXmlDocument doc;
+  doc.Parse(kernel_xml.data(), nullptr, TIXML_ENCODING_UTF8);
+  for (const TiXmlElement* xml_arg = doc.FirstChildElement("root")
+                                         ->FirstChildElement("kernel")
+                                         ->FirstChildElement("args")
+                                         ->FirstChildElement("arg");
+       xml_arg != nullptr; xml_arg = xml_arg->NextSiblingElement("arg")) {
+    ArgInfo arg;
+    arg.index = atoi(xml_arg->Attribute("id"));
+    LOG_IF(FATAL, arg.index != args_.size())
+        << "Expecting argument #" << args_.size() << ", got argument #"
+        << arg.index << " in the metadata";
+    arg.name = xml_arg->Attribute("name");
+    arg.type = xml_arg->Attribute("type");
+    switch (int cat = atoi(xml_arg->Attribute("addressQualifier")); cat) {
+      case 0:
+        arg.cat = ArgInfo::kScalar;
+        break;
+      case 1:
+        arg.cat = ArgInfo::kMmap;
+        break;
+      case 4:
+        arg.cat = ArgInfo::kStream;
+        break;
+      default:
+        LOG(WARNING) << "Unknown argument category: " << cat;
+    }
+    args_.push_back(arg);
+  }
+
   LOG(INFO) << "Running hardware simulation with TAPA fast cosim";
 }
 
@@ -93,6 +139,12 @@ std::unique_ptr<Device> TapaFastCosimDevice::New(std::string_view path,
 }
 
 void TapaFastCosimDevice::SetScalarArg(int index, const void* arg, int size) {
+  LOG_IF(FATAL, index >= args_.size())
+      << "Cannot set argument #" << index << "; there are only " << args_.size()
+      << " arguments";
+  LOG_IF(FATAL, args_[index].cat != ArgInfo::kScalar)
+      << "Cannot set argument '" << args_[index].name
+      << "' as a scalar; it is a " << args_[index].cat;
   std::basic_string_view<unsigned char> arg_str(
       reinterpret_cast<const unsigned char*>(arg), size);
   std::stringstream ss;
@@ -106,6 +158,12 @@ void TapaFastCosimDevice::SetScalarArg(int index, const void* arg, int size) {
 
 void TapaFastCosimDevice::SetBufferArg(int index, Tag tag,
                                        const BufferArg& arg) {
+  LOG_IF(FATAL, index >= args_.size())
+      << "Cannot set argument #" << index << "; there are only " << args_.size()
+      << " arguments";
+  LOG_IF(FATAL, args_[index].cat != ArgInfo::kMmap)
+      << "Cannot set argument '" << args_[index].name
+      << "' as an mmap; it is a " << args_[index].cat;
   buffer_table_.insert({index, arg});
   if (tag == Tag::kReadOnly || tag == Tag::kReadWrite) {
     store_indices_.insert(index);
@@ -188,24 +246,7 @@ void TapaFastCosimDevice::Finish() {
   // Not implemented.
 }
 
-std::vector<ArgInfo> TapaFastCosimDevice::GetArgsInfo() const {
-  std::vector<ArgInfo> args;
-  for (auto& [index, _] : scalars_) {
-    ArgInfo arg = {};
-    arg.index = index;
-    arg.cat = ArgInfo::kScalar;
-    args.push_back(arg);
-  }
-  for (auto& [index, _] : buffer_table_) {
-    ArgInfo arg = {};
-    arg.index = index;
-    arg.cat = ArgInfo::kMmap;
-    args.push_back(arg);
-  }
-  std::sort(args.begin(), args.end(),
-            [](auto& a, auto& b) { return a.index < b.index; });
-  return args;
-}
+std::vector<ArgInfo> TapaFastCosimDevice::GetArgsInfo() const { return args_; }
 
 int64_t TapaFastCosimDevice::LoadTimeNanoSeconds() const {
   return load_time_.count();

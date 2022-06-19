@@ -33,6 +33,18 @@ execute_process(
     ${CMAKE_CURRENT_BINARY_DIR}/include/subprocess.hpp
 )
 
+file(
+  DOWNLOAD
+  https://github.com/tfussell/miniz-cpp/raw/052335e4f7/zip_file.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/include/zip_file.hpp
+  TLS_VERIFY ON
+)
+execute_process(
+  COMMAND
+    sed -i "-es/std::uint64_t/mz_uint64/"
+    ${CMAKE_CURRENT_BINARY_DIR}/include/zip_file.hpp
+)
+
 set(frt_sources
     src/frt.cpp
     src/frt/arg_info.cpp
