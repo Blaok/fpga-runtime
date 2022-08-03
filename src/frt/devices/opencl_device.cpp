@@ -9,6 +9,7 @@
 #include <glog/logging.h>
 #include <CL/cl2.hpp>
 
+#include "frt/devices/opencl_device_matcher.h"
 #include "frt/devices/opencl_util.h"
 
 namespace fpga {
@@ -147,7 +148,7 @@ size_t OpenclDevice::StoreBytes() const {
 
 void OpenclDevice::Initialize(const cl::Program::Binaries& binaries,
                               const std::string& vendor_name,
-                              const std::string& target_device_name,
+                              const OpenclDeviceMatcher& device_matcher,
                               const std::vector<std::string>& kernel_names,
                               const std::vector<int>& kernel_arg_counts) {
   std::vector<cl::Platform> platforms;
@@ -161,16 +162,8 @@ void OpenclDevice::Initialize(const cl::Program::Binaries& binaries,
       std::vector<cl::Device> devices;
       CL_CHECK(platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &devices));
       for (const auto& device : devices) {
-        const std::string device_name = device.getInfo<CL_DEVICE_NAME>(&err);
-        CL_CHECK(err);
-        LOG(INFO) << "Found device: " << device_name;
-        // Intel devices contain a std::string that is unavailable from the
-        // binary.
-        bool is_target_device = false;
-        std::string prefix = target_device_name + " : ";
-        is_target_device = device_name == target_device_name ||
-                           device_name.substr(0, prefix.size()) == prefix;
-        if (is_target_device) {
+        if (std::string device_name = device_matcher.Match(device);
+            !device_name.empty()) {
           LOG(INFO) << "Using " << device_name;
           device_ = device;
           context_ = cl::Context(device, nullptr, nullptr, nullptr, &err);
@@ -200,7 +193,8 @@ void OpenclDevice::Initialize(const cl::Program::Binaries& binaries,
           return;
         }
       }
-      LOG(FATAL) << "Target device '" << target_device_name << "' not found";
+      LOG(FATAL) << "Target device '" << device_matcher.GetTargetName()
+                 << "' not found";
     }
   }
   LOG(FATAL) << "Target platform '" + vendor_name + "' not found";

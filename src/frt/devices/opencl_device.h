@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -13,6 +14,7 @@
 
 #include "frt/arg_info.h"
 #include "frt/device.h"
+#include "frt/devices/opencl_device_matcher.h"
 #include "frt/stream_wrapper.h"
 #include "frt/tag.h"
 
@@ -38,9 +40,9 @@ class OpenclDevice : public Device {
  protected:
   void Initialize(const cl::Program::Binaries& binaries,
                   const std::string& vendor_name,
-                  const std::string& target_device_nam,
+                  const OpenclDeviceMatcher& device_matcher,
                   const std::vector<std::string>& kernel_names,
-                  const std::vector<int>& kernel_arg_countse);
+                  const std::vector<int>& kernel_arg_counts);
   virtual cl::Buffer CreateBuffer(int index, cl_mem_flags flags, void* host_ptr,
                                   size_t size);
 

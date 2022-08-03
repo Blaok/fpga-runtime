@@ -19,6 +19,7 @@
 #include <nlohmann/json.hpp>
 #include <subprocess.hpp>
 
+#include "frt/devices/opencl_device_matcher.h"
 #include "frt/devices/opencl_util.h"
 #include "frt/devices/xilinx_environ.h"
 #include "frt/devices/xilinx_opencl_stream.h"
@@ -35,6 +36,80 @@ namespace fs = std::experimental::filesystem;
 
 namespace fpga {
 namespace internal {
+
+namespace {
+
+std::vector<std::string_view> Split(std::string_view text, char delimiter,
+                                    size_t maxsplit = -1) {
+  std::vector<std::string_view> pieces;
+  size_t piece_len = 0;
+  for (char character : text) {
+    if (pieces.size() == maxsplit) break;
+    if (character == delimiter) {
+      pieces.push_back(text.substr(0, piece_len));
+      text.remove_prefix(piece_len + 1);
+      piece_len = 0;
+    } else {
+      ++piece_len;
+    }
+  }
+  pieces.push_back(text);
+  return pieces;
+}
+
+bool StartsWith(std::string_view text, std::string_view prefix) {
+  return text.size() >= prefix.size() &&
+         text.substr(0, prefix.size()) == prefix;
+}
+
+class DeviceMatcher : public OpenclDeviceMatcher {
+ public:
+  explicit DeviceMatcher(std::string target_device_name)
+      : target_device_name_(std::move(target_device_name)),
+        target_device_name_pieces_(
+            Split(target_device_name_, /*delimiter=*/'_', /*maxsplit=*/4)) {}
+
+  std::string GetTargetName() const override { return target_device_name_; }
+
+  std::string Match(cl::Device device) const override {
+    const std::string device_name = device.getInfo<CL_DEVICE_NAME>();
+    LOG(INFO) << "Found device: " << device_name;
+
+    if (device_name == target_device_name_) return device_name;
+
+    // Xilinx devices might have unrelated names in the binary:
+    //   1) target_device_name == "xilinx_u250_gen3x16_xdma_3_1_202020_1"
+    //      device_name == "xilinx_u250_gen3x16_xdma_shell_3_1"
+    //   2) target_device_name == "xilinx_u200_gen3x16_xdma_1_202110_1"
+    //      device_name == "xilinx_u200_gen3x16_xdma_base_1"
+
+    // For 1), this is {"xilinx", "u250", "gen3x16", "xdma", "3_1_202020_1"}.
+    // For 2), this is {"xilinx", "u200", "gen3x16", "xdma", "1_202110_1"}.
+    if (target_device_name_pieces_.size() < 5) return "";
+
+    // For 1), this is {"xilinx", "u250", "gen3x16", "xdma", "shell", "3_1"}.
+    // For 2), this is {"xilinx", "u200", "gen3x16", "xdma", "base", "1"}.
+    std::vector<std::string_view> device_name_pieces =
+        Split(device_name, /*delimiter=*/'_', /*maxsplit=*/5);
+    if (device_name_pieces.size() < 6) return "";
+
+    for (int i = 0; i < 4; ++i) {
+      if (device_name_pieces[i] != target_device_name_pieces_[i]) return "";
+    }
+
+    if (StartsWith(target_device_name_pieces_[4], device_name_pieces[5])) {
+      return device_name;
+    }
+
+    return "";
+  }
+
+ private:
+  const std::string target_device_name_;
+  const std::vector<std::string_view> target_device_name_pieces_;
+};
+
+}  // namespace
 
 XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
   std::string target_device_name;
@@ -188,7 +263,8 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
     LOG(INFO) << "Running on-board execution with Xilinx OpenCL";
   }
 
-  Initialize(binaries, "Xilinx", target_device_name, kernel_names,
+  Initialize(binaries, /*vendor_name=*/"Xilinx",
+             DeviceMatcher(target_device_name), kernel_names,
              kernel_arg_counts);
 }
 

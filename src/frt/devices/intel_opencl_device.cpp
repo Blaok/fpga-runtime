@@ -10,12 +10,41 @@
 #include <tinyxml.h>
 #include <CL/cl2.hpp>
 
+#include "frt/devices/opencl_device_matcher.h"
 #include "frt/devices/opencl_util.h"
 #include "frt/stream_wrapper.h"
 #include "frt/tag.h"
 
 namespace fpga {
 namespace internal {
+
+namespace {
+
+class DeviceMatcher : public OpenclDeviceMatcher {
+ public:
+  explicit DeviceMatcher(std::string target_device_name)
+      : target_device_name_(std::move(target_device_name)) {}
+
+  std::string GetTargetName() const override { return target_device_name_; }
+
+  std::string Match(cl::Device device) const override {
+    const std::string device_name = device.getInfo<CL_DEVICE_NAME>();
+    LOG(INFO) << "Found device: " << device_name;
+
+    // Intel devices contain a std::string that is unavailable from the binary.
+    const std::string prefix = target_device_name_ + " : ";
+    if (device_name == target_device_name_ ||
+        device_name.substr(0, prefix.size()) == prefix) {
+      return device_name;
+    }
+    return "";
+  }
+
+ private:
+  const std::string target_device_name_;
+};
+
+}  // namespace
 
 IntelOpenclDevice::IntelOpenclDevice(const cl::Program::Binaries& binaries) {
   std::string target_device_name;
@@ -100,8 +129,8 @@ IntelOpenclDevice::IntelOpenclDevice(const cl::Program::Binaries& binaries) {
     LOG(FATAL) << "Unexpected ELF file";
   }
 
-  Initialize(binaries, vendor_name, target_device_name, kernel_names,
-             kernel_arg_counts);
+  Initialize(binaries, vendor_name, DeviceMatcher(target_device_name),
+             kernel_names, kernel_arg_counts);
 }
 
 std::unique_ptr<Device> IntelOpenclDevice::New(
