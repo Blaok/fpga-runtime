@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include <fstream>
+#include <initializer_list>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -12,6 +13,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <CL/cl.h>
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <tinyxml.h>
 #include <xclbin.h>
@@ -33,6 +36,10 @@ namespace fs = std::filesystem;
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #endif
+
+DEFINE_string(xocl_bdf, "",
+              "if not empty, use the specified PCIe Bus:Device:Function "
+              "instead of trying to match device name");
 
 namespace fpga {
 namespace internal {
@@ -62,6 +69,15 @@ bool StartsWith(std::string_view text, std::string_view prefix) {
          text.substr(0, prefix.size()) == prefix;
 }
 
+std::string Concat(std::initializer_list<std::string_view> pieces) {
+  size_t total_length = 0;
+  for (auto piece : pieces) total_length += piece.size();
+  std::string text;
+  text.reserve(total_length);
+  for (auto piece : pieces) text += piece;
+  return text;
+}
+
 class DeviceMatcher : public OpenclDeviceMatcher {
  public:
   explicit DeviceMatcher(std::string target_device_name)
@@ -69,13 +85,32 @@ class DeviceMatcher : public OpenclDeviceMatcher {
         target_device_name_pieces_(
             Split(target_device_name_, /*delimiter=*/'_', /*maxsplit=*/4)) {}
 
+  // Not copyable nor movable because the `string_view`s won't be valid.
+  DeviceMatcher(const DeviceMatcher&) = delete;
+  DeviceMatcher(DeviceMatcher&&) = delete;
+  DeviceMatcher& operator=(const DeviceMatcher&) = delete;
+  DeviceMatcher& operator=(DeviceMatcher&&) = delete;
+
   std::string GetTargetName() const override { return target_device_name_; }
 
   std::string Match(cl::Device device) const override {
     const std::string device_name = device.getInfo<CL_DEVICE_NAME>();
-    LOG(INFO) << "Found device: " << device_name;
+    char bdf[32];
+    size_t bdf_size = 0;
+    CL_CHECK(clGetDeviceInfo(device.get(), CL_DEVICE_PCIE_BDF, sizeof(bdf), bdf,
+                             &bdf_size));
+    const std::string device_name_and_bdf =
+        Concat({device_name, " (bdf=", bdf, ")"});
+    LOG(INFO) << "Found device: " << device_name_and_bdf;
 
-    if (device_name == target_device_name_) return device_name;
+    if (const std::string target_bdf = FLAGS_xocl_bdf; !target_bdf.empty()) {
+      if (target_bdf == bdf) {
+        return device_name_and_bdf;
+      }
+      return "";
+    }
+
+    if (device_name == target_device_name_) return device_name_and_bdf;
 
     // Xilinx devices might have unrelated names in the binary:
     //   1) target_device_name == "xilinx_u250_gen3x16_xdma_3_1_202020_1"
@@ -98,7 +133,7 @@ class DeviceMatcher : public OpenclDeviceMatcher {
     }
 
     if (StartsWith(target_device_name_pieces_[4], device_name_pieces[5])) {
-      return device_name;
+      return device_name_and_bdf;
     }
 
     return "";
