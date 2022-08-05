@@ -378,14 +378,14 @@ Version: 0.0.20220626.1
 Priority: optional
 Section: devel
 Maintainer: Blaok Chi
-Installed-Size: 3419
+Installed-Size: 3444
 Depends: bash, coreutils, fuse, libgflags-dev, libgoogle-glog-dev, libtinyxml-dev, ocl-icd-libopencl1 | libopencl1, procps, util-linux
 Recommends: bindfs, csh, squashfs-tools, squashfuse, xrt
 Filename: pool/main/focal/libfrt-dev_0.0.20220626.1_amd64.deb
-Size: 1034280
-MD5sum: 15b2561ab58bf9379062a9206c77ae9f
-SHA1: e780420c003fefdce684090c03d50ab590cebb3f
-SHA256: 0b220c1b55f374d2f8d336d1c86050a4d6e2527dbca70cd6903d3543fe433dc0
-SHA512: 0aaba98796f890a37675e3a3cec18d5850602af2a08928f745b2ce67a8ea9d98146e63d4da7181cf10f157f72a4cadfc33a3405d8f58d2306c865307ac05d684
+Size: 1043612
+MD5sum: 8af7066b4ef5c5edf582d4f78d0dab5f
+SHA1: d1c183b533696946462ea640f5b37b58075d6c0c
+SHA256: 7ea5e3bbb942adf013d11ef11ddab196aeaf55d020f555155c50090282a377a7
+SHA512: 0f825163f46a6bcfeca6b5536f74bdd4d44caa42880ab45faafc527893d7227c11b61b2abfb62c796ab46043dacaf71df05286e476dd040fbdddf2c32ccc74c6
 Description: FPGA Runtime for PCIe-Based FPGAs
 
