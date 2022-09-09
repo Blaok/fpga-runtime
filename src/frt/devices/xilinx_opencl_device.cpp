@@ -313,9 +313,13 @@ std::unique_ptr<Device> XilinxOpenclDevice::New(
 }
 
 void XilinxOpenclDevice::SetStreamArg(int index, Tag tag, StreamWrapper& arg) {
+#ifdef FRT_ENABLE_XOCL_STREAM
   auto pair = GetKernel(index);
   arg.Attach(std::make_unique<XilinxOpenclStream>(
       arg.name, device_, pair.second, pair.first, tag));
+#else   // FRT_ENABLE_XOCL_STREAM
+  LOG(FATAL) << "Xilinx OpenCL streaming is disabled";
+#endif  // FRT_ENABLE_XOCL_STREAM
 }
 
 void XilinxOpenclDevice::WriteToDevice() {

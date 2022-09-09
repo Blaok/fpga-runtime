@@ -12,6 +12,16 @@ find_package(OpenCL REQUIRED)
 find_package(TinyXML REQUIRED)
 find_package(XRT REQUIRED)
 
+set(DEFAULT_ENABLE_XOCL_STREAM ON)
+if(XRT_VERSION VERSION_GREATER_EQUAL 2.13)
+  set(DEFAULT_ENABLE_XOCL_STREAM OFF)
+endif()
+option(
+  ENABLE_XOCL_STREAM
+  "Enable Xilinx streaming APIs"
+  ${DEFAULT_ENABLE_XOCL_STREAM}
+)
+
 include_directories(SYSTEM ${XRT_INCLUDE_DIR})
 
 file(
@@ -53,7 +63,6 @@ set(frt_sources
     src/frt/devices/tapa_fast_cosim_device.cpp
     src/frt/devices/xilinx_environ.cpp
     src/frt/devices/xilinx_opencl_device.cpp
-    src/frt/devices/xilinx_opencl_stream.cpp
 )
 set(frt_compile_features
     cxx_std_17
@@ -76,6 +85,11 @@ set(frt_compile_definitions
     CL_TARGET_OPENCL_VERSION=120
     CL_MINIMUM_OPENCL_VERSION=120
 )
+if(ENABLE_XOCL_STREAM)
+  message(STATUS "Building FRT with Xilinx streaming APIs")
+  list(APPEND frt_sources src/frt/devices/xilinx_opencl_stream.cpp)
+  list(APPEND frt_compile_definitions FRT_ENABLE_XOCL_STREAM)
+endif()
 
 set(frt_private_link_libraries
     -l:libOpenCL.so.1 # Nvidia's OpenCL doesn't have libOpenCL.so
