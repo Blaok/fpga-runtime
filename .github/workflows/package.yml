@@ -32,6 +32,11 @@ jobs:
           ./.github/scripts/install-xrt.sh
       - name: Configure myself
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+      - name: Build myself
+        run: cmake --build build --target all
+      - name: Test myself
+        run: ctest --exclude-regex '.*-co?sim'
+        working-directory: build
       - name: Package myself
         run: cmake --build build --target package
       - name: Upload deb package
