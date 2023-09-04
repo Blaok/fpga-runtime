@@ -1,0 +1,50 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Architectures: amd64
+Codename: jammy
+Components: main
+Date: Mon, 04 Sep 2023 03:44:39 +0000
+Label: FPGA Runtime Repository
+MD5Sum:
+ 6d06e578b615e7e01896d86a371631f3              123 Release
+ 3d142e3065273816c9c7911dcc876f92             3694 main/Contents-amd64
+ a747fa9713a2131968edc4ac94b1aabb              573 main/Contents-amd64.gz
+ 7e3bf376f51f6891f991dac8f0402973              755 main/binary-amd64/Packages
+ 68e24550639270fd2ed8bd7c6240725d              523 main/binary-amd64/Packages.gz
+ 8b496fd9328c8b688d0683546078fd1f              832 main/binary-amd64/Release
+SHA1:
+ 7b1f4f368248fd85ece40d0066aa9f167bbeedc0              123 Release
+ 4bd4a659962a3efc0b7b020bed3c215c7d380dd6             3694 main/Contents-amd64
+ a96c2f954a14f2cc8266bd737f0b7ad6046bc76f              573 main/Contents-amd64.gz
+ ee2b79af138ffed624d7c29f3400272b57459c77              755 main/binary-amd64/Packages
+ 3ea1eb12a53258b414f808e62969f6a57fb52907              523 main/binary-amd64/Packages.gz
+ 09152615900c8fc54bfb87baabcdad573f8e28a5              832 main/binary-amd64/Release
+SHA256:
+ 226c12373a72df9f9d7ef815f53f1deb24ee75afe0ab8a86542f986dc850b4c6              123 Release
+ 9de225643dea5810257c5d5a6e232f55bbcb393cf05b7b7e3ac8bec7531d2ef3             3694 main/Contents-amd64
+ fb2e9e16e13bef6aaf781e47a9078072800169f39b91a4de17011ed70f5e9f6d              573 main/Contents-amd64.gz
+ acc160096874f00ddd5ab1f966e2643a8eefc6a63f8d74419d4b358d765d5cee              755 main/binary-amd64/Packages
+ c7cbe849a38401da29b4874cba28fb814b340facf94b4e632ed611074a39833d              523 main/binary-amd64/Packages.gz
+ 9aaf2c26de499aa93df7579dcb6bb8e972e2fc771a53913166ebeb88ef200a6f              832 main/binary-amd64/Release
+SHA512:
+ 7c00347f1517f9f4e434afacf251e2c83f44717837e44d6f4ca9a08ffa6a5feffe49f1707fdd28785180325530b13397b4616c7c65a4a9dad6132dceb3419b76              123 Release
+ ba5ce182d9a1cd1637c99700030cd950a4c363f209be94b1a78ad358398b8c1e1b8f1e1e67ddbc8d3e28bd2753ec0e4336167f51842f92b690c8e019e34a5178             3694 main/Contents-amd64
+ c1f2af36da1dfe992bb64f7bc9eaa956c9995d65508f204766c63025875c3166b943d8e15db5d428076e2ccc7f75a0c933b4e10b661bb2f6de8d562e70ff7889              573 main/Contents-amd64.gz
+ 91e0260bc52d9b81f824b6190a5db0ed8998710c0772e9f99d7805b6198eb97efc6f57e3bba1f3b8353236fd82442cac8588c8743470ce0d45f11bef28bdb956              755 main/binary-amd64/Packages
+ fe17a107847637b6a6e7ed73fdd4dbdc21339c00d1bed03ace64809a539414f9ab55f27861d8b9c3646e45ecea121b2604cf9d0651da41ed2f3b46ec65115a4f              523 main/binary-amd64/Packages.gz
+ 380ae9c6e835cf7cdd3143194e40aec96cea7190b7f2148a0bf8ea343b1375402dbd8c860771933afc38f67cc98bc402572fa83da7cce376b44442beabb3bf50              832 main/binary-amd64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQGzBAEBCAAdFiEEIPkzQePUbMYnN8h0o9uLJGNrM+4FAmT1UqcACgkQo9uLJGNr
+M+40owv/bqRU/vr4GA6FzqCiG1DnRdaHiTmTSA1oT3iGA4jBxpngXyv1yTU1gJ1O
+wPAXPR5abQpcgq1rYaDE4wQmHfSLKQUiujUiGpmMlTYCQoioKHfcqdI+N3wkNAgJ
+CSTyRe2E7j47nrLHsahLUM5P1Wspbw0hh568Z43/xzu4bYGJMOGoXbQ+l64KdT6y
+HtOXaho/LFoGx0GlbPGjMS98XTbBavP1uNBm8vv2nBfw08P6mxnqW8PIqQzgJYEl
+lAdVgd9opWWjPDbL/Eh49URP0AbKu+5WwtOVIR/nLLvhChNo0TM0Wy0HpS4Jj+0W
+UkGenz9CzjE+I6fXmywA9KuveQ7z510xVLXPfjTW9tVUOFmGU0rPjYraBNgRx4WZ
+un+SR4QNRMovx1eO+9JzfhEQKKv2S30e6oDaUqjMpgS0VNw7zqjav9iNjFjnrHLT
+z8iUXzRjw+INPBICGYS93OyrnU06/lZScGF0xwQHW8JXNtwsSsSAO+3Omd7zPSpm
+a41hGhg4
+=h8o4
+-----END PGP SIGNATURE-----
