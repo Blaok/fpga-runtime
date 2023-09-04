@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 version="$(grep --perl --only '(?<=VERSION_ID=").+(?=")' /etc/os-release)"
-if test "${version//.*/}" -le 20; then
-  file="xrt_202020.2.8.726_${version}-amd64-xrt.deb"
+if test "${version//.*/}" -le 22; then
+  file="xrt_202220.2.14.354_${version}-amd64-xrt.deb"
   curl "https://www.xilinx.com/bin/public/openDownload?filename=${file}" \
     --location --output "${file}"
   sudo apt-get update
