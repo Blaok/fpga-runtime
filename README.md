@@ -5,7 +5,7 @@ Both Intel and Xilinx platforms are supported.
 
 ## Prerequisites
 
-+ Ubuntu 18.04+
++ Ubuntu 20.04+
 
 ## Install from Binary
 
