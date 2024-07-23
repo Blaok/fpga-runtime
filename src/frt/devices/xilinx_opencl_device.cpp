@@ -97,8 +97,9 @@ class DeviceMatcher : public OpenclDeviceMatcher {
     const std::string device_name = device.getInfo<CL_DEVICE_NAME>();
     char bdf[32];
     size_t bdf_size = 0;
-    CL_CHECK(clGetDeviceInfo(device.get(), CL_DEVICE_PCIE_BDF, sizeof(bdf), bdf,
-                             &bdf_size));
+    cl_int rc = clGetDeviceInfo(device.get(), CL_DEVICE_PCIE_BDF, sizeof(bdf), bdf,
+                             &bdf_size);
+    if (rc != CL_SUCCESS) { return ""; }
     const std::string device_name_and_bdf =
         Concat({device_name, " (bdf=", bdf, ")"});
     LOG(INFO) << "Found device: " << device_name_and_bdf;
