@@ -55,13 +55,6 @@ execute_process(
     ${CMAKE_CURRENT_BINARY_DIR}/include/zip_file.hpp
 )
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
-)
-FetchContent_MakeAvailable(googletest)
-
 set(frt_sources
     src/frt.cpp
     src/frt/arg_info.cpp
@@ -261,11 +254,14 @@ include(CPack)
 
 enable_testing()
 
-include(GoogleTest)
+find_package(GTest)
+if(GTest_FOUND)
+  include(GoogleTest)
 
-add_executable(buffer_test src/frt/buffer_test.cpp)
-target_link_libraries(buffer_test frt GTest::gtest_main)
-gtest_discover_tests(buffer_test)
+  add_executable(buffer_test src/frt/buffer_test.cpp)
+  target_link_libraries(buffer_test frt GTest::gtest_main)
+  gtest_discover_tests(buffer_test)
+endif()
 
 add_subdirectory(tests/hbm)
 add_subdirectory(tests/xdma)
