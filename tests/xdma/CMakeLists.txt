@@ -28,7 +28,6 @@ add_xocc_targets(${CMAKE_CURRENT_BINARY_DIR}
                  HW_EMU_XCLBIN hw_emu_xclbin
                  HW_XCLBIN hw_xclbin)
 
-# Only works for 2020.2.
 file(
   DOWNLOAD
   https://github.com/Licheng-Guo/tapa-fast-cosim/raw/02ecd87c4d24d6513d8c0d15af8046d5ee05a2ae/example/vadd/vadd.xo
@@ -43,7 +42,7 @@ add_custom_target(xdma-csim
                   WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
 add_custom_target(xdma-xosim
                   COMMAND xdma-vadd ${CMAKE_CURRENT_BINARY_DIR}/vadd.xo 1000
-                  DEPENDS xdma-vadd ${hw_xo}
+                  DEPENDS xdma-vadd ${CMAKE_CURRENT_BINARY_DIR}/vadd.xo
                   WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})
 add_custom_target(xdma-cosim
                   COMMAND xdma-vadd

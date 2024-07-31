@@ -12,15 +12,16 @@ jobs:
 
     strategy:
       matrix:
+        xocl-platform:
+          - xilinx_u250_gen3x16_xdma_4_1_202210_1
         xocl-version:
-          - 2019.2
-          - 2020.2
-          - 2021.1
-          - 2021.2
+          - 2023.2
 
     env:
       # Cannot source Xilinx scripts because they mess up many system libraries.
+      XILINX_HLS: /opt/tools/xilinx/Vitis_HLS/${{ matrix.xocl-version }}
       XILINX_VITIS: /opt/tools/xilinx/Vitis/${{ matrix.xocl-version }}
+      XILINX_VIVADO: /opt/tools/xilinx/Vivado/${{ matrix.xocl-version }}
 
     steps:
       - name: Checkout myself
@@ -32,16 +33,15 @@ jobs:
             cmake \
             libgflags-dev \
             libgoogle-glog-dev \
+            libgtest-dev \
             libtinyxml-dev \
             opencl-headers \
             python3-pip \
-            xilinx-u250-xdma-dev \
-            xilinx-u280-xdma-dev \
 
           python3 -m pip install --user \
-            git+https://github.com/Licheng-Guo/tapa-fast-cosim.git@02ecd87c4d24d6513d8c0d15af8046d5ee05a2ae
+            git+https://github.com/UCLA-VAST/tapa-fast-cosim.git@93646a999b786e94626982700dfaf708fe3deec0
       - name: Configure myself
-        run: cmake -S. -Bbuild
+        run: cmake -S. -Bbuild -DXRT_PLATFORM=${{ matrix.xocl-platform }}
       - name: Build myself
         run: cmake --build build --target all
       - name: Test myself
@@ -50,12 +50,5 @@ jobs:
           # Some Vitis versions have a bug where xclbinutil is not found without
           # manually sourcing the XRT setup script.
           source "${XILINX_XRT}"/setup.sh
-          # Vivado doesn't like running concurrently for the first time.
-          (
-            source "${XILINX_VITIS}"/settings64.sh
-            vivado -mode batch -nojournal -nolog
-          )
-          ctest --verbose --parallel $(nproc)
-      - name: Run TAPA fast cosim
-        if: ${{ matrix.xocl-version == '2020.2' }}
-        run: cmake --build build --target xdma-xosim
+          source "${XILINX_VITIS}"/settings64.sh
+          /usr/bin/ctest --verbose --stop-on-failure
