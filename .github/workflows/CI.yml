@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout myself
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           sudo apt-get update
