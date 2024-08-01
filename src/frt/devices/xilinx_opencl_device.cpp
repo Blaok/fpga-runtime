@@ -170,6 +170,8 @@ XilinxOpenclDevice::XilinxOpenclDevice(const cl::Program::Binaries& binaries) {
   }
   target_device_name =
       reinterpret_cast<const char*>(axlf_top->m_header.m_platformVBNV);
+  LOG_IF(FATAL, target_device_name.empty())
+      << "Cannot determine target device name from binary";
   if (auto metadata = xclbin::get_axlf_section(axlf_top, EMBEDDED_METADATA)) {
     TiXmlDocument doc;
     doc.Parse(
