@@ -14,6 +14,7 @@ jobs:
       matrix:
         xocl-platform:
           - xilinx_u250_gen3x16_xdma_4_1_202210_1
+          - xilinx_u280_gen3x16_xdma_1_202211_1
         xocl-version:
           - 2023.2
 
