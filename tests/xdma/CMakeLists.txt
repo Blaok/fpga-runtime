@@ -13,12 +13,17 @@ if(NOT XRT_PLATFORM)
 endif()
 set(KERNEL VecAdd)
 
+if (${XRT_PLATFORM} MATCHES "_(u50|u280)_")
+  set(DRAM HBM)
+else()
+  set(DRAM DDR)
+endif()
 add_xocc_targets(${CMAKE_CURRENT_BINARY_DIR}
                  PREFIX xdma
                  KERNEL ${KERNEL}
                  PLATFORM ${XRT_PLATFORM}
                  INPUT xdma-kernel.cpp
-                 DRAM_MAPPING gmem0:DDR[0] gmem1:DDR[1] gmem2:DDR[2]
+                 DRAM_MAPPING gmem0:${DRAM}[0] gmem1:${DRAM}[1] gmem2:${DRAM}[2]
                  SW_EMU_XCLBIN sw_emu_xclbin
                  HW_EMU_XCLBIN hw_emu_xclbin
                  HW_XCLBIN hw_xclbin)

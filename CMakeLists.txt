@@ -263,5 +263,4 @@ if(GTest_FOUND)
   gtest_discover_tests(buffer_test)
 endif()
 
-add_subdirectory(tests/hbm)
 add_subdirectory(tests/xdma)
