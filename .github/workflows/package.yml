@@ -38,7 +38,7 @@ jobs:
       - name: Build myself
         run: cmake --build build --target all
       - name: Test myself
-        run: ctest --exclude-regex '.*-co?sim'
+        run: ctest --exclude-regex '^.*-.*sim$'
         working-directory: build
       - name: Package myself
         run: cmake --build build --target package

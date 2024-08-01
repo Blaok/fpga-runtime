@@ -62,6 +62,12 @@ add_test(NAME xdma-csim
                  ${CMAKE_BINARY_DIR}
                  --target
                  xdma-csim)
+add_test(NAME xdma-xosim
+         COMMAND ${CMAKE_COMMAND}
+                 --build
+                 ${CMAKE_BINARY_DIR}
+                 --target
+                 xdma-xosim)
 add_test(NAME xdma-cosim
          COMMAND ${CMAKE_COMMAND}
                  --build
